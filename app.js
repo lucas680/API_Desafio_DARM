@@ -2,6 +2,13 @@ const express = require('express');
 const app = express();
 
 const users = require('./models/pessoa');
+const estado = require('./models/estado');
+const telefone = require('./models/telefone')
+
+//inserir estados após criar a tabela
+require('./models/criarEstados')
+
+const endereco = require('./models/endereco')
 
 app.use(express.json());
 

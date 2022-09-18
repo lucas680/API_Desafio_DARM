@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 
 const db = require('./db.js');
 
-const estado = db.define('estado', {
+const estado = db.define('estados', {
 	est_id: {
 		type: Sequelize.INTEGER(11),
 		autoIncrement: true,
@@ -16,14 +16,15 @@ const estado = db.define('estado', {
 	est_uf: {
 		type: Sequelize.STRING(2),
 		allowNull: true
-	},
-	est_ddd: {
-		type: Sequelize.STRING(100),
-		allowNull: true
 	}
 });
 
 //criar a tabela quando não existir
-estado.sync();
+async function criarEstado() {
+	await estado.sync();
+}
 
-module.exports = users;
+criarEstado();
+
+
+module.exports = estado;

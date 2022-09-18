@@ -40,6 +40,11 @@ const users = db.define('pessoas', {
 });
 
 //criar a tabela quando não existir
-users.sync();
+async function criarPessoa() {
+	await users.sync();
+}
+
+criarPessoa();
+
 
 module.exports = users;
