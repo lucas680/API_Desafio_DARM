@@ -32,7 +32,8 @@ const telefone = db.define('telefones', {
 
 pessoa.hasMany(telefone, {
 	foreignKey: {
-		name: 'pes_id'
+		name: 'pes_id',
+		allowNull: false
 	}
 });
 

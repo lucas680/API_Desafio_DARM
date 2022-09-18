@@ -37,13 +37,15 @@ const endereco = db.define('enderecos', {
 
 pessoa.hasMany(endereco, {
 	foreignKey: {
-		name: 'pes_id'
+		name: 'pes_id',
+		allowNull: false
 	}
 });
 
 estado.hasMany(endereco, {
 	foreignKey: {
-		name: 'est_id'
+		name: 'est_id',
+		allowNull: false
 	}
 });
 

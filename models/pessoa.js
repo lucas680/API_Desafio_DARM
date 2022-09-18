@@ -19,11 +19,13 @@ const users = db.define('pessoas', {
 	},
 	pes_email: {
 		type: Sequelize.STRING(200),
-		allowNull: true
+		allowNull: true,
+		unique: true
 	},
 	pes_cpf: {
 		type: Sequelize.STRING(14),
-		allowNull: false
+		allowNull: false,
+		unique: true
 	},
 	pes_senha: {
 		type: Sequelize.STRING(200),

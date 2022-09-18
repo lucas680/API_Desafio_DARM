@@ -48,6 +48,20 @@ const convertercpf = (cpf) => {
 	return Cpf;
 }
 
+//função para validar telefone
+const validateTelefone = (tel) => {
+	var ddd = tel.substring(1, 3);
+	var tip = tel.substring(5, 6);
+	var n1 = tel.substring(6, 10);
+	var n2 = tel.substring(11, 14);
+
+	if(!isNaN(ddd) && !isNaN(tip) && !isNaN(n1) && !isNaN(n2)){
+		return true;
+	}else{
+		return false;
+	}
+}
+
 
 // biblioteca para criptografar a senha
 
@@ -62,24 +76,38 @@ function criptografar(senha){
 }
 
 
-//cadastro de usuário
+//cadastro de usuário e adm
 
 app.post("/cadastrar", async(req, res)=>{
 
-	var nome = req.body.pes_nome
-	var tipo = req.body.pes_tipo
-	var status = req.body.pes_status
-	var email = req.body.pes_email
-	var senha = req.body.pes_senha
-	var senha2 = req.body.pes_senha2
-	var cpf = req.body.pes_cpf
+	var nome = req.body.nome
+	var tipo = req.body.tipo
+	if(tipo === undefined){
+		tipo = 'corrente'
+	}
+
+	var status = req.body.status
+	var email = req.body.email
+	var senha = req.body.senha
+	var senha2 = req.body.senha2
+	var cpf = req.body.cpf
 
 
 	//tipo apenas com a primeira letra maiúscula
 	tipo = tipo[0].toUpperCase()+tipo.substring(1).toLowerCase()
 
+	var Telefone = req.body.telefone
+
+	var cidade = req.body.cidade
+	var Estado = req.body.estado
+	var logradouro = req.body.logradouro
+	var numero = req.body.numero
+	var bairro = req.body.bairro
+	var cep = req.body.cep
+
 	if(nome != '' && (tipo == 'Corrente' || tipo == 'Poupança') && (status == '0' || status == '1') && validateEmail(email) &&
-(senha == senha2) && validatecpf(cpf)){
+(senha == senha2) && validatecpf(cpf) && validateTelefone(Telefone) && cidade != '' && (Estado > 0 && Estado < 28) && 
+logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep)){
 
 		senha = criptografar(senha);
 		cpf = convertercpf(cpf);
@@ -121,6 +149,10 @@ app.post("/cadastrar", async(req, res)=>{
 
 		
 	}).catch(async(erro) =>{
+
+			if(status == '1'){
+				tipo = null
+			}
 		
 			await users.create({
 			pes_nome: nome,
@@ -129,18 +161,54 @@ app.post("/cadastrar", async(req, res)=>{
 			pes_senha: senha,
 			pes_tipo: tipo,
 			pes_status: status
-		}).then(()=>{
+		}).then(user=>{
+
+			users.findAll({
+				where: {
+					pes_email: email
+				}
+			}).then(async(user2) =>{
+				user2 = Object.assign({}, user2)
+				user2 = Object.assign({}, user2[0])
+				id = user2.dataValues.pes_id
+
+				//cadastro do telefone
+
+				var ddd = Telefone.substring(1, 3);
+				var tip = Telefone.substring(5, 6);
+				var n1 = Telefone.substring(6, 10);
+				var n2 = Telefone.substring(11, 15);
+
+				await telefone.create({
+					tel_prefixo: '55',
+					tel_ddd: ddd,
+					tel_tipo: tip,
+					tel_numero: n1+n2,
+					pes_id: id
+		});
+
+				//cadastro do endereço
+
+				await endereco.create({
+					end_cidade: cidade,
+					end_logradouro: logradouro,
+					end_numero: numero,
+					end_bairro: bairro,
+					end_cep: cep,
+					pes_id: id,
+					est_id: Estado
+		});
+
+				res.json({
+					erro: false,
+					mensagem: "Usuário cadastrado com sucesso"
+				})
+			})
 				
-			if(status == '0'){
 
-		}else{
+			}).catch((err)=>{
 
-
-		}
-
-		res.send('aqui vai o cadastro do telefone e endereço')
-
-			}).catch(()=>{
+				console.log(err)
 				res.status(400).json({
 					erro: true,
 					mensagem: "Usuário não cadastrado com sucesso"
@@ -161,18 +229,6 @@ app.post("/cadastrar", async(req, res)=>{
 	})
 
 	}
-
-	/* await users.create(req.body).then(()=>{
-		return res.json({
-			erro: false,
-			mensagem: "Usuário cadastrado com sucesso!"
-		})
-	}).catch(()=>{
-		res.status(400).json({
-			erro: true,
-			mensagem: "Usuário não cadastrado com sucesso"
-		})
-	});*/
 
 });
 
