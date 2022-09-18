@@ -232,7 +232,58 @@ logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep)){
 
 });
 
-app.get("/listar/:id", (req, res) =>{
+
+// login do usuário e adm
+
+app.get("/login", (req, res) =>{
+
+	var cpf = req.body.cpf
+	var senha = req.body.senha
+
+	if(validatecpf(cpf) && senha != ''){
+
+		senha = criptografar(senha)
+
+		users.findAll({
+		where: {
+			pes_cpf: cpf,
+			pes_senha: senha
+		}
+	}).then(user => {
+	
+		user = Object.assign({}, user)
+		user = Object.assign({}, user[0])
+
+		if(user.dataValues.pes_cpf == cpf){
+
+		res.json({
+			erro: false,
+			mensagem: "Login efetuado com sucesso"
+		})
+
+		}
+	}).catch(error =>{
+		res.status(400).json({
+				erro: true,
+				mensagem: "Erro ao efetuar login"
+			})
+	})
+
+	}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "Por favor, envie os dados corretamente"
+		})
+	}
+	
+
+})
+
+
+
+
+
+/*app.get("/listar/:id", (req, res) =>{
 	users.findAll({
 		where: { 
 			pes_id: req.params.id
@@ -245,7 +296,7 @@ app.get("/listar/:id", (req, res) =>{
             message: "Nenhum Usuário encontrado"
         })
     })
-})
+})*/
 
 app.listen(8082, ()=>{
 	console.log("Servidor iniciado na porta 8082: http://localhost:8082");
