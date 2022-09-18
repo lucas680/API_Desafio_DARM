@@ -106,7 +106,7 @@ app.post("/cadastrar", async(req, res)=>{
 	var cep = req.body.cep
 
 	if(nome != '' && (tipo == 'Corrente' || tipo == 'Poupança') && (status == '0' || status == '1') && validateEmail(email) &&
-(senha == senha2) && validatecpf(cpf) && validateTelefone(Telefone) && cidade != '' && (Estado > 0 && Estado < 28) && 
+(senha == senha2) && senha != '' && validatecpf(cpf) && validateTelefone(Telefone) && cidade != '' && (Estado > 0 && Estado < 28) && 
 logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep)){
 
 		senha = criptografar(senha);
@@ -233,6 +233,73 @@ logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep)){
 });
 
 
+// recuperar senha a partir do cpf, email e nome completo
+
+app.post("/redefinirSenha", async(req, res) =>{
+	var nome = req.body.nome
+	var email = req.body.email
+	var cpf = req.body.cpf
+	var senha = req.body.senha
+	var senha2 = req.body.senha2
+
+	if(nome != '' && validateEmail(email) && validatecpf(cpf) && senha != '' && senha == senha2){
+
+		senha = criptografar(senha)
+
+		users.findAll({
+			where: {
+				pes_cpf: cpf,
+				pes_email: email,
+				pes_nome: nome
+			}
+		}).then(user =>{
+
+			user = Object.assign({}, user)
+			user = Object.assign({}, user[0])
+
+			if(user.dataValues.pes_cpf == cpf && user.dataValues.pes_email == email){
+
+				users.update({
+					pes_senha: senha
+				}, {
+					where: {
+						pes_cpf: cpf
+					}
+				}).then(()=>{
+
+					res.json({
+						erro: false,
+						mensagem: "Senha redefinida com sucesso"
+					})
+
+				}).catch(() =>{
+					res.json({
+						erro: true,
+						mensagem: "Erro ao redefinir senha"
+					})
+				})
+
+			}
+
+		}).catch(err =>{
+			res.status(400).json({
+		erro: true,
+		mensagem: "Usuário não encontrado"
+		})
+		})
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Por favor, envie os dados corretamente"
+		})
+
+	}
+
+})
+
+
 // login do usuário e adm
 
 app.get("/login", (req, res) =>{
@@ -265,7 +332,7 @@ app.get("/login", (req, res) =>{
 	}).catch(error =>{
 		res.status(400).json({
 				erro: true,
-				mensagem: "Erro ao efetuar login"
+				mensagem: "Erro ao efetuar login, cpf ou senha incorreto(s)"
 			})
 	})
 
