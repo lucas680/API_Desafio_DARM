@@ -3,12 +3,14 @@ const app = express();
 
 const users = require('./models/pessoa');
 const estado = require('./models/estado');
-const telefone = require('./models/telefone')
+const telefone = require('./models/telefone');
 
 //inserir estados após criar a tabela
-require('./models/criarEstados')
+require('./models/criarEstados');
 
-const endereco = require('./models/endereco')
+const cartao = require('./models/cartao');
+
+const endereco = require('./models/endereco');
 
 app.use(express.json());
 
@@ -62,6 +64,64 @@ const validateTelefone = (tel) => {
 	}
 }
 
+//função para validar número do cartão
+
+function validateNumeroCartao(numero){
+	var n1 = numero.substring(0, 4);
+	var n2 = numero.substring(5, 9);
+	var n3 = numero.substring(10, 14);
+	var n4 = numero.substring(15, 19);
+
+	var E1 = numero.substring(4, 5);
+	var E2 = numero.substring(9, 10);
+	var E3 = numero.substring(14, 15);
+
+	if(!isNaN(n1) && !isNaN(n2) && !isNaN(n3) && !isNaN(n4) && E1 == ' ' && E2 == ' ' && E3 == ' '){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+//função para validar tipo do cartão
+function validateTipo(tipo, num){
+
+	if(num === 1){
+
+		if(tipo == 'Credito' || tipo == 'Debito' || tipo == 'Poupança'){
+			return true;
+		}else{
+			return false;
+		}
+
+	}
+	else if(num === 2){
+
+		if(tipo == 'Credito' || tipo == 'Debito' || tipo == 'Poupança' || tipo == ''){
+			return true;
+		}else{
+			return false;
+		}
+
+	}
+	else{
+		return false;
+	}
+
+}
+
+//função para validar identificação do cartão
+
+function validateIdentificacao(identificacao){
+
+	if(identificacao == 'Visa' || identificacao == 'MasterCard' || identificacao == 'Elo' || 
+		identificacao == 'Hibercard' || identificacao == 'American Express'){
+		return true;
+	}else{
+		return false;
+	}
+
+}
 
 // biblioteca para criptografar a senha
 
@@ -233,9 +293,158 @@ logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep)){
 });
 
 
+// criação de cartão novo
+
+app.post("/cadastrarCartao", (req, res) =>{
+	var tipo1 = req.body.tipo1
+	var tipo2 = req.body.tipo2
+	var identificacao = req.body.identificacao
+	var numero = req.body.numero
+	var cvc = req.body.cvc
+	var validade = req.body.validade
+	var cpf = req.body.cpf
+
+	//tipo apenas com a primeira letra maiúscula
+	tipo1 = tipo1[0].toUpperCase()+tipo1.substring(1).toLowerCase()
+	if(tipo2 != ''){
+		tipo2 = tipo2[0].toUpperCase()+tipo2.substring(1).toLowerCase()
+	}
+
+	if(validatecpf(cpf) && validateNumeroCartao(numero) && validateTipo(tipo1, 1) && validateTipo(tipo2, 2) && 
+		validateIdentificacao(identificacao) && !isNaN(cvc) && cvc.length == 3 && (validade == 2 || validade == 4 ||
+			validade == 5 || validade == 6)){
+
+		// obs: O status é para somente usuários (status == 0) criarem cartões
+		users.findAll({
+			where: {
+				pes_cpf: cpf,
+				pes_status: 0
+			}
+		}).then(user =>{
+			user = Object.assign({}, user)
+			user = Object.assign({}, user[0])
+			id = user.dataValues.pes_id
+
+			// ver a quantidade de cartoes que o usuario já fez, maximo 6
+
+			cartao.findAll({
+			where: {
+				pes_id: id
+			}
+			}).then(cart =>{
+				cart = Object.assign({}, cart)
+				quantidadeCartoes = Object.keys(cart).length
+
+				if(quantidadeCartoes < 6){
+
+					//ver se numero do cartao ja existe da bd
+
+					cartao.findAll({
+					where: {
+						car_numero: numero
+					}
+					}).then(cart =>{
+
+							cart = Object.assign({}, cart)
+							cart = Object.assign({}, cart[0])
+
+							if(cart.dataValues.car_numero == numero){
+								res.status(400).json({
+									erro: true,
+									mensagem: "O número do cartão já foi cadastrado"
+								})
+							}
+
+					}).catch(async(err) =>{
+
+						//gerar a data de validade
+
+						var ano = new Date().getFullYear();
+						var mes = new Date().getMonth();
+						ano = ano + Number(validade)
+						mes = mes + 1
+						mes = String(mes)
+
+						if(mes.length == 1){
+							mes = '0'+mes;
+						}
+
+						await cartao.create({
+							car_tipo1: tipo1,
+							car_tipo2: tipo2,
+							car_identificacao: identificacao,
+							car_numero: numero,
+							car_cvc: cvc,
+							car_mes_validade: mes,
+							car_ano_validade: ano,
+							car_status: 0,
+							car_aprovacao: 0,
+							pes_id: id
+						}).then(()=>{
+
+							res.json({
+							erro: false,
+							mensagem: "Cartão criado com sucesso",
+							estado: "Aprovação pendente",
+							numero: numero,
+							validade: mes+"/"+ano
+							});
+
+						}).catch(()=>{
+
+							res.status(400).json({
+							erro: true,
+							mensagem: "Erro ao criar cartão"
+							});
+
+						})
+
+					})
+
+				
+				}else{
+
+					res.status(400).json({
+					erro: true,
+					mensagem: "Não é permitido adicionar mais que 6 cartões"
+					});
+
+				}
+
+			}).catch(err =>{
+
+				res.status(400).json({
+			erro: true,
+			mensagem: "Erro ao verificar cartões"
+			});
+
+			})
+
+			
+
+		}).catch(err =>{
+			res.status(400).json({
+		erro: true,
+		mensagem: "Usuário não encontrado"
+		})
+		});
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Por favor, envie os dados corretamente"
+		})
+
+	}
+
+
+});
+
+
 // recuperar senha a partir do cpf, email e nome completo
 
-app.post("/redefinirSenha", async(req, res) =>{
+app.patch("/redefinirSenha", async(req, res) =>{
 	var nome = req.body.nome
 	var email = req.body.email
 	var cpf = req.body.cpf
@@ -297,8 +506,104 @@ app.post("/redefinirSenha", async(req, res) =>{
 
 	}
 
-})
+});
 
+
+// aprovar criação de cartão pelo ADM
+
+app.patch("/aprovarCriacao", (req, res)=>{
+
+	cpf = req.body.cpf
+	numero = req.body.numero
+	status = req.body.status
+	mensagem = req.body.mensagem
+
+	if(validatecpf(cpf) && validateNumeroCartao(numero) && (status == 1 || (status == 2 && mensagem != ''))){
+
+		users.findAll({
+			where: {
+				pes_cpf: cpf,
+				pes_status: 1
+			}
+		}).then(user =>{
+			user = Object.assign({}, user)
+			user = Object.assign({}, user[0])
+
+			if(user.dataValues.pes_cpf == cpf && user.dataValues.pes_status == 1){
+
+			cartao.findAll({
+			where: {
+				car_numero: numero
+			}
+			}).then(async(cart) =>{
+				cart = Object.assign({}, cart)
+				cart = Object.assign({}, cart[0])
+				id = cart.dataValues.car_id
+
+				await cartao.update({
+					car_aprovacao: status,
+					car_mensagem: mensagem
+				}, {
+					where: {
+						car_id: id
+					}
+				}).then(()=>{
+
+					if(status == 1){
+
+						res.json({
+						erro: false,
+						mensagem: "Cartão aprovado com sucesso"
+						});
+
+					}else{
+
+						res.json({
+						erro: false,
+						mensagem: "Cartão reprovado com sucesso"
+						});
+
+					}
+
+				}).catch(err =>{
+
+					res.status(400).json({
+					erro: true,
+					mensagem: "Erro ao aprovar/reprovar cartão"
+					});
+
+				})
+
+			}).catch(err =>{
+
+				res.status(400).json({
+				erro: true,
+				mensagem: "Cartão não encontrado"
+				});
+
+			});
+
+		}
+
+		}).catch(err =>{
+
+			res.status(400).json({
+			erro: true,
+			mensagem: "Administrador não encontrado"
+			});
+
+		});
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Por favor, envie os dados corretamente"
+		});
+
+	}
+
+});
 
 // login do usuário e adm
 

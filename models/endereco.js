@@ -50,10 +50,8 @@ estado.hasMany(endereco, {
 });
 
 //criar a tabela quando não existir
-async function criarEndereco() {
-	await endereco.sync();
-}
+endereco.sync();
 
-criarEndereco();
+
 
 module.exports = endereco;
