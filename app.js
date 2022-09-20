@@ -14,11 +14,6 @@ const endereco = require('./models/endereco');
 
 app.use(express.json());
 
-app.get("/", async(req, res)=>{
-	res.send("Página incial");
-
-});
-
 //função para validar email
 const validateEmail = (email) => {
     const re = /\S+@\S+\.\S+/;
@@ -123,6 +118,19 @@ function validateIdentificacao(identificacao){
 
 }
 
+//função para criar array com os ids das pessoas
+function arrayID(end){
+	var quantidade = Object.keys(end).length;
+	var array = [];
+
+	for(var i = 0; i < quantidade; i++){
+		array[i] = end[i].dataValues.pes_id
+	}
+
+	return array;
+}
+
+
 // biblioteca para criptografar a senha
 
 const crypto = require('crypto');
@@ -135,6 +143,10 @@ function criptografar(senha){
 	return cipher.final('hex');
 }
 
+app.get("/", async(req, res)=>{
+	res.send("Página inicial");
+
+});
 
 //cadastro de usuário e adm
 
@@ -295,7 +307,7 @@ logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep)){
 
 // criação de cartão novo
 
-app.post("/cadastrarCartao", (req, res) =>{
+app.post("/criarCartao", (req, res) =>{
 	var tipo1 = req.body.tipo1
 	var tipo2 = req.body.tipo2
 	var identificacao = req.body.identificacao
@@ -303,6 +315,7 @@ app.post("/cadastrarCartao", (req, res) =>{
 	var cvc = req.body.cvc
 	var validade = req.body.validade
 	var cpf = req.body.cpf
+	var senha = req.body.senha
 
 	//tipo apenas com a primeira letra maiúscula
 	tipo1 = tipo1[0].toUpperCase()+tipo1.substring(1).toLowerCase()
@@ -312,12 +325,14 @@ app.post("/cadastrarCartao", (req, res) =>{
 
 	if(validatecpf(cpf) && validateNumeroCartao(numero) && validateTipo(tipo1, 1) && validateTipo(tipo2, 2) && 
 		validateIdentificacao(identificacao) && !isNaN(cvc) && cvc.length == 3 && (validade == 2 || validade == 4 ||
-			validade == 5 || validade == 6)){
+			validade == 5 || validade == 6) && senha != ''){
+			senha = criptografar(senha);
 
 		// obs: O status é para somente usuários (status == 0) criarem cartões
 		users.findAll({
 			where: {
 				pes_cpf: cpf,
+				pes_senha: senha,
 				pes_status: 0
 			}
 		}).then(user =>{
@@ -517,12 +532,15 @@ app.patch("/aprovarCriacao", (req, res)=>{
 	numero = req.body.numero
 	status = req.body.status
 	mensagem = req.body.mensagem
+	senha = req.body.senha
 
-	if(validatecpf(cpf) && validateNumeroCartao(numero) && (status == 1 || (status == 2 && mensagem != ''))){
+	if(validatecpf(cpf) && validateNumeroCartao(numero) && (status == 1 || (status == 2 && mensagem != '')) && senha != ''){
+		senha = criptografar(senha);
 
 		users.findAll({
 			where: {
 				pes_cpf: cpf,
+				pes_senha: senha,
 				pes_status: 1
 			}
 		}).then(user =>{
@@ -533,7 +551,201 @@ app.patch("/aprovarCriacao", (req, res)=>{
 
 			cartao.findAll({
 			where: {
-				car_numero: numero
+				car_numero: numero,
+				car_status: 0
+			}
+			}).then(async(cart) =>{
+				cart = Object.assign({}, cart)
+				cart = Object.assign({}, cart[0])
+				id = cart.dataValues.car_id
+
+				await cartao.update({
+					car_aprovacao: status,
+					car_mensagem: mensagem
+				}, {
+					where: {
+						car_id: id
+					}
+				}).then(()=>{
+
+					if(status == 1){
+
+						res.json({
+						erro: false,
+						mensagem: "Cartão aprovado com sucesso"
+						});
+
+					}else{
+
+						res.json({
+						erro: false,
+						mensagem: "Cartão reprovado com sucesso"
+						});
+
+					}
+
+				}).catch(err =>{
+
+					res.status(400).json({
+					erro: true,
+					mensagem: "Erro ao aprovar/reprovar cartão"
+					});
+
+				})
+
+			}).catch(err =>{
+
+				res.status(400).json({
+				erro: true,
+				mensagem: "Cartão não encontrado"
+				});
+
+			});
+
+		}
+
+		}).catch(err =>{
+
+			res.status(400).json({
+			erro: true,
+			mensagem: "Administrador não encontrado"
+			});
+
+		});
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Por favor, envie os dados corretamente"
+		});
+
+	}
+
+});
+
+
+// fazer o cadastro do cartão pelo usuário
+
+app.patch("/cadastrarCartao", (req, res)=>{
+
+	cpf = req.body.cpf
+	senha = req.body.senha
+	numero = req.body.numero
+
+	if(validatecpf(cpf) && senha != '' && validateNumeroCartao(numero)){
+		senha = criptografar(senha)
+
+		users.findAll({
+			where: {
+				pes_cpf: cpf,
+				pes_senha: senha,
+				pes_status: 0
+			}
+		}).then(user =>{
+			user = Object.assign({}, user)
+			user = Object.assign({}, user[0])
+			id = user.dataValues.pes_id
+
+			if(user.dataValues.pes_cpf == cpf){
+
+				cartao.findAll({
+					where: {
+						car_numero: numero,
+						pes_id: id,
+						car_aprovacao: 1
+					}
+				}).then(async(cart) =>{
+					cart = Object.assign({}, cart)
+					cart = Object.assign({}, cart[0])
+					cartId = cart.dataValues.car_id
+
+					await cartao.update({
+					car_status: 1,
+					car_aprovacao: 0
+				}, {
+					where: {
+						car_id: cartId
+					}
+				}).then(()=>{
+
+					res.json({
+						erro: false,
+						mensagem: "Cartão cadastrado com sucesso",
+						estado: "Aprovação pendente"
+					})
+
+				}).catch(err =>{
+
+					res.status(400).json({
+					erro: true,
+					mensagem: "Erro ao cadastrar cartão"
+					});
+
+				})
+
+
+				}).catch(err =>{
+
+					res.status(400).json({
+					erro: true,
+					mensagem: "Cartão não encontrado ou já cadastrado"
+					});
+
+				})
+
+			}
+
+		}).catch(err =>{
+
+			res.status(400).json({
+			erro: true,
+			mensagem: "Usuário não encontrado"
+			});
+
+		});
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Por favor, envie os dados corretamente"
+		});
+
+	}
+
+});
+
+
+// aprovar criação de cartão pelo ADM
+
+app.patch("/aprovarCadastro", (req, res)=>{
+
+	cpf = req.body.cpf
+	numero = req.body.numero
+	status = req.body.status
+	mensagem = req.body.mensagem
+	senha = req.body.senha
+
+	if(validatecpf(cpf) && validateNumeroCartao(numero) && (status == 1 || (status == 2 && mensagem != '')) && senha != ''){
+		senha = criptografar(senha);
+
+		users.findAll({
+			where: {
+				pes_cpf: cpf,
+				pes_senha: senha,
+				pes_status: 1
+			}
+		}).then(user =>{
+			user = Object.assign({}, user)
+			user = Object.assign({}, user[0])
+
+			if(user.dataValues.pes_cpf == cpf && user.dataValues.pes_status == 1){
+
+			cartao.findAll({
+			where: {
+				car_numero: numero,
+				car_status: 1
 			}
 			}).then(async(cart) =>{
 				cart = Object.assign({}, cart)
@@ -649,26 +861,237 @@ app.get("/login", (req, res) =>{
 	}
 	
 
+});
+
+
+app.get("/visualizarClientes", (req, res)=>{
+
+	cpf = req.body.cpf
+	senha = req.body.senha
+	indicador = req.body.indicador
+	indicador2 = req.body.indicador2
+
+	if(validatecpf(cpf) && senha != '' && ((indicador == 'E' && indicador2 > 0 && indicador2 < 28) || 
+		(indicador == 'Q' && indicador2 >= 0 && indicador2 < 7) || indicador == 'A')){
+
+		senha = criptografar(senha);
+
+		users.findAll({
+			where: {
+				pes_cpf: cpf,
+				pes_senha: senha,
+				pes_status: 1
+			}
+		}).then(()=>{
+
+			if(indicador == 'E'){
+
+				endereco.findAll({
+					attributes: ['pes_id'],
+					where: {
+						est_id: indicador2
+					}
+				}).then((end)=>{
+					end = Object.assign({}, end)
+					var array = arrayID(end);
+
+					users.findAll({
+						where: {
+							pes_id: array,
+							pes_status: 0
+						}
+					}).then(user =>{
+
+						user = Object.assign({}, user)
+						var quantidade = Object.keys(user).length;
+						var array2 = []
+						var obj = {}
+
+						for(var i = 0; i<quantidade; i++){
+							obj = {
+								id: user[i].dataValues.pes_id,
+								nome: user[i].dataValues.pes_nome,
+								cpf: user[i].dataValues.pes_cpf,
+								email: user[i].dataValues.pes_email
+							}
+							array2[i] = obj;
+						}
+
+						if(quantidade > 0){
+							res.json({
+							quantidade: quantidade,
+							pessoas: array2
+						});
+						}else{
+							res.json({
+								erro: false,
+								mensagem: "Ainda não há usuários cadastrados neste estado"
+							})
+						}
+						
+						
+
+					}).catch(()=>{
+						res.status(400).json({
+							erro: true,
+							mensagem: "Falha ao buscar pelos usuários"
+						})
+					})
+
+				}).catch(() =>{
+						
+					res.status(400).json({
+						erro: true,
+						mensagem: "Falha ao buscar pelos usuários"
+					})
+
+				});
+
+			}else if(indicador == 'Q'){
+
+				users.findAll({
+					where: {
+						pes_status: 0
+					}
+				}).then(async(user) =>{
+					user = Object.assign({}, user);
+
+					var quantidade = Object.keys(user).length;
+					var array = arrayID(user);
+					var quantidadeCartoes;
+					var array2 = []
+					var obj = {}
+					var contador = 0;
+
+					for(var i = 0; i < quantidade; i++){
+						var id = array[i];
+
+						await cartao.findAll({
+							where: {
+								pes_id: id
+							}
+						}).then(cart =>{
+							cart = Object.assign({}, cart);
+							quantidadeCartoes = Object.keys(cart).length;
+
+							if(quantidadeCartoes == indicador2){
+								console.log("Entrou no if")
+								console.log(id)
+								console.log(i)
+								console.log(quantidadeCartoes)
+
+								obj = {
+									id: user[i].dataValues.pes_id,
+									nome: user[i].dataValues.pes_nome,
+									cpf: user[i].dataValues.pes_cpf,
+									email: user[i].dataValues.pes_email
+								}
+								array2[contador] = obj;
+								contador += 1;
+							}
+
+						});
+
+					}
+
+					if(contador > 0){
+
+						res.json({
+						quantidade: contador,
+						pesoas: array2
+					});
+
+					}else{
+
+						res.json({
+							erro: false,
+							mensagem: "Ainda não há usuários com essa quantidade de cartões"
+						})
+
+					}
+
+					
+
+				}).catch(()=>{
+					res.json({
+						erro: true,
+						mensagem: "Erro ao buscar usuários"
+					})
+				});
+
+			}else{
+
+				users.findAll({
+					where: {
+						pes_status: 0
+					},
+					order: [
+						[
+						'pes_nome',
+						'ASC'
+						]
+					]
+				}).then(user =>{
+
+					user = Object.assign({}, user);
+					quantidade = Object.keys(user).length;
+					array2 = []
+					obj = {}
+
+					for(var i = 0; i < quantidade; i++){
+						obj = {
+							id: user[i].dataValues.pes_id,
+							nome: user[i].dataValues.pes_nome,
+							cpf: user[i].dataValues.pes_cpf,
+							email: user[i].dataValues.pes_email
+						}
+						array2[i] = obj;
+					}
+
+					if(quantidade > 0){
+						res.json({
+							quantidade: quantidade,
+							pessoas: array2
+						});
+					}else{
+						res.json({
+							erro: false,
+							mensagem: "Ainda não há usuários cadastrados"
+						})
+					}
+
+				}).catch(()=>{
+					res.status(400).json({
+						erro: true,
+						mensagem: "Erro ao pesquisar usuários"
+					})
+				})
+
+			}
+
+		}).catch(err =>{
+
+			res.status(400).json({
+				erro: true,
+				mensagem: "Administrador não encontrado"
+			})
+
+		});
+
+	}else{
+
+		res.status(400).json({
+			erro: true,
+			mensagem: "Por favor, envie os dados corretamente"
+		})
+
+	}
+
 })
 
 
 
 
-
-/*app.get("/listar/:id", (req, res) =>{
-	users.findAll({
-		where: { 
-			pes_id: req.params.id
-		}
-	}).then((user)=>{
-        return res.json(user)
-    }).catch((error) =>{
-        return res.status(400).json({
-            error: true,
-            message: "Nenhum Usuário encontrado"
-        })
-    })
-})*/
 
 app.listen(8082, ()=>{
 	console.log("Servidor iniciado na porta 8082: http://localhost:8082");
