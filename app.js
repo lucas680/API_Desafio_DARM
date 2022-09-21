@@ -1,6 +1,10 @@
 const express = require('express');
 const app = express();
 
+const multer = require('multer');
+const upload = multer({dest: 'imagens/'});
+const fs = require('fs');
+
 const users = require('./models/pessoa');
 const estado = require('./models/estado');
 const telefone = require('./models/telefone');
@@ -814,6 +818,293 @@ app.patch("/aprovarCadastro", (req, res)=>{
 		});
 
 	}
+
+});
+
+
+// editar perfil do usuario e ADM
+
+app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
+
+        var foto = '';
+        if(req.file){
+        	const {file} = req
+        	foto = file.filename
+        }
+        
+        var nome = req.body.nome
+        var email = req.body.email
+        var cpf = req.body.cpf
+        var cpf_novo = req.body.cpf_novo
+        var senha = req.body.senha
+
+        var Telefone = req.body.telefone
+
+        var Estado = req.body.estado
+        var cidade = req.body.cidade
+        var logradouro = req.body.logradouro
+        var numero = req.body.numero
+        var bairro = req.body.bairro
+        var cep = req.body.cep
+
+        if(validatecpf(cpf) && senha != ''){
+        	senha = criptografar(senha);
+
+        	if(foto != null && foto != undefined && foto != ''){
+        		// pesquisar na bd se já tem foto, se tiver pagar e adicionar a nova
+
+        		await users.findAll({
+        			attributes: [
+        				'pes_foto'
+        			],
+        			where: {
+        				pes_cpf: cpf,
+        				pes_senha: senha
+        			}
+        		}).then(async(ft) =>{
+        			ft = Object.assign({}, ft);
+        			ft = Object.assign({}, ft[0]);
+        			ft = ft.dataValues.pes_foto
+
+        			if(ft != null){
+        				//apagar foto
+        				const caminho = './imagens/'+ft;
+        				fs.unlink(caminho, (err)=>{
+        					if(err){
+        						res.json({
+        							erro: true,
+        							mensagem: "Erro ao remover imagem antiga"
+        						})
+        					}
+        				})
+        			}
+
+        			await users.update({
+        					pes_foto: foto
+        				}, {
+        					where: {
+        						pes_cpf: cpf
+        					}
+        				});
+
+        		}).catch(()=>{
+        			//apagar foto
+        				const caminho = './imagens/'+foto;
+        				fs.unlink(caminho, (err)=>{
+        					if(err){
+        						res.json({
+        							erro: true,
+        							mensagem: "Erro ao remover imagem"
+        						})
+        					}
+        				})
+
+        			res.status(400).json({
+        				erro: true,
+        				mensagem: "Erro ao verificar usuário em editar foto"
+        			})
+        		});
+
+        	}
+
+        	if(nome != ''){
+
+        		await users.findAll({
+        			attributes: [
+        				'pes_cpf'
+        			],
+        			where: {
+        				pes_cpf: cpf,
+        				pes_senha: senha
+        			}
+        		}).then(async(user) => {
+        			user = Object.assign({}, user);
+        			user = Object.assign({}, user[0]);
+        			user = user.dataValues.pes_cpf
+
+        			if(user == cpf){
+
+        				await users.update({
+        					pes_nome: nome
+        				}, {
+        					where: {
+        						pes_cpf: cpf
+        					}
+        				});
+
+        			}
+
+        		}).catch(()=>{
+        			res.status(400).json({
+        				erro: true,
+        				mensagem: "Erro ao verificar usuário em editar nome"
+        			})
+        		});
+
+        	}
+
+        	if(validateEmail(email)){
+
+        		await users.findAll({
+        			attributes: [
+        				'pes_cpf'
+        			],
+        			where: {
+        				pes_cpf: cpf,
+        				pes_senha: senha
+        			}
+        		}).then(user => {
+        			user = Object.assign({}, user);
+        			user = Object.assign({}, user[0]);
+        			user = user.dataValues.pes_cpf
+
+        			if(user == cpf){
+
+        				users.findAll({
+        					where: {
+        						pes_email: email
+        					}
+        				}).then((user)=>{
+        					user = Object.assign({}, user);
+        					user = Object.assign({}, user[0]);
+
+        					if(user.dataValues.pes_email == email){
+
+	        					res.status(400).json({
+	        						erro: true,
+	        						mensagem: "Email já cadastrado em outra conta"
+	        					})
+
+        					}
+        				}).catch(async(err)=>{
+
+	        					await users.update({
+	        					pes_email: email
+	        				}, {
+	        					where: {
+	        						pes_cpf: cpf
+	        					}
+	        				});
+
+        				});
+
+        			}
+
+        		}).catch(()=>{
+        			res.status(400).json({
+        				erro: true,
+        				mensagem: "Erro ao verificar usuário em editar email"
+        			})
+        		});
+
+        	}
+
+        	if(validateTelefone(Telefone)){
+        		await users.findAll({
+        			attributes: [
+        				'pes_cpf',
+        				'pes_id'
+        			],
+        			where: {
+        				pes_cpf: cpf,
+        				pes_senha: senha
+        			}
+        		}).then(async(user) => {
+        			user = Object.assign({}, user);
+        			user = Object.assign({}, user[0]);
+        			var id = user.dataValues.pes_id
+
+        			if(user.dataValues.pes_cpf == cpf){
+
+        				var ddd = Telefone.substring(1, 3);
+						var tip = Telefone.substring(5, 6);
+						var n1 = Telefone.substring(6, 10);
+						var n2 = Telefone.substring(11, 15);
+
+						await telefone.update({
+							tel_ddd: ddd,
+							tel_tipo: tip,
+							tel_numero: n1+n2
+						}, {
+							where: {
+								pes_id: id
+							}
+						});
+
+        			}
+
+        		}).catch(()=>{
+        			res.status(400).json({
+        				erro: true,
+        				mensagem: "Erro ao verificar usuário em editar telefone"
+        			})
+        		});
+        	}
+
+        	if(cidade != '' && logradouro != '' && bairro != '' && !isNaN(numero) && !isNaN(cep) &&
+        		(Estado > 0 && Estado < 28)){
+
+        		await users.findAll({
+        			attributes: [
+        				'pes_cpf',
+        				'pes_id'
+        			],
+        			where: {
+        				pes_cpf: cpf,
+        				pes_senha: senha
+        			}
+        		}).then(async(user) =>{
+
+        			user = Object.assign({}, user);
+        			user = Object.assign({}, user[0]);
+        			var id = user.dataValues.pes_id
+
+        			if(user.dataValues.pes_cpf == cpf){
+        				await endereco.update({
+							end_cidade: cidade,
+							end_logradouro: logradouro,
+							end_numero: numero,
+							end_bairro: bairro,
+							end_cep: cep,
+							est_id: Estado
+						}, {
+							where: {
+								pes_id: id
+							}
+						});
+        			}
+
+        		}).catch(()=>{
+        			res.status(400).json({
+        				erro: true,
+        				mensagem: "Erro ao verificar usuário em editar endereço"
+        			})
+        		});
+
+        	}
+
+        	res.json({
+        		erro: false,
+        		mensagem: "Dados editados com sucesso"
+        	})
+
+        }else{
+        	//apagar foto
+        	const caminho = './imagens/'+foto;
+        	fs.unlink(caminho, (err)=>{
+        		if(err){
+        			res.json({
+        				erro: true,
+        				mensagem: "Erro ao remover imagem"
+        			})
+        		}
+        	})
+
+        	res.status(400).json({
+        		erro: true,
+        		mensagem: "É necessário enviar o seu cpf e senha atuais"
+        	})
+        }
 
 });
 
