@@ -1378,7 +1378,98 @@ app.get("/visualizarClientes", (req, res)=>{
 
 	}
 
-})
+});
+
+
+app.delete("/deletarConta", (req, res) =>{
+	cpf = req.body.cpf
+	senha = req.body.senha
+
+	if(validatecpf(cpf) && senha != ''){
+		senha = criptografar(senha);
+
+		users.findAll({
+			where: {
+				pes_cpf: cpf,
+				pes_senha: senha
+			}
+		}).then(async(user) =>{
+
+			user = Object.assign({}, user)
+			user = Object.assign({}, user[0])
+			var id = user.dataValues.pes_id
+
+			if(user.dataValues.pes_cpf == cpf){
+
+				await telefone.destroy({
+					where: {
+						pes_id: id
+					}
+				}).catch(err =>{
+					res.status(400).json({
+						erro: true,
+						mensagem: "Erro ao deletar telefone"
+					})
+				});
+				await endereco.destroy({
+					where: {
+						pes_id: id
+					}
+				}).catch(err =>{
+					res.status(400).json({
+						erro: true,
+						mensagem: "Erro ao deletar endereço"
+					})
+				});
+
+				//apagar foto
+				if(user.dataValues.pes_foto != null && user.dataValues.pes_foto != undefined &&
+					user.dataValues.pes_foto != ''){
+						const caminho = './imagens/'+user.dataValues.pes_foto;
+	        			fs.unlink(caminho, (err)=>{
+			        		if(err){
+			        			res.json({
+				        			erro: true,
+				        			mensagem: "Erro ao remover imagem"
+			        			})
+		        			}
+	        			});
+				}
+        		
+
+        		await users.destroy({
+        			where: {
+        				pes_id: id
+        			}
+        		}).catch(err =>{
+        			res.status(400).json({
+						erro: true,
+						mensagem: "Erro ao deletar usuário"
+					})
+        		});
+
+        		res.json({
+        			erro: false,
+        			mensagem: "Usuário deletado com sucesso"
+        		})
+
+			}
+
+		}).catch(err =>{
+			res.status(400).json({
+				erro: true,
+				mensagem: "Usuário não encontrado"
+			})
+		})
+
+
+	}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "Por favor, envie os dados corretamente"
+		})
+	}
+});
 
 
 
