@@ -1381,6 +1381,124 @@ app.get("/visualizarClientes", (req, res)=>{
 });
 
 
+app.get("/visualizarCartoes", async(req, res)=>{
+
+	cpf = req.body.cpf
+	senha = req.body.senha
+
+	if(validatecpf(cpf) && senha != ""){
+		senha = criptografar(senha);
+
+		await users.findAll({
+			where: {
+				pes_cpf: cpf,
+				pes_senha: senha
+			}
+		}).then(async(user) =>{
+			user = Object.assign({}, user);
+			user = Object.assign({}, user[0]);
+			var id = user.dataValues.pes_id
+
+			if(user.dataValues.pes_cpf == cpf){
+
+				await cartao.findAll({
+					where: {
+						pes_id: id
+					}
+				}).then(cart =>{
+					cart = Object.assign({}, cart);
+					var quantidade = Object.keys(cart).length;
+						var array2 = []
+						var obj = {}
+
+						for(var i = 0; i<quantidade; i++){
+
+							var mes = String(cart[i].dataValues.car_mes_validade)
+							if(mes.length == 1){
+								mes = '0'+mes
+							}
+							var dataValidade = mes+'/'+
+							cart[i].dataValues.car_ano_validade
+
+							var Tipo = cart[i].dataValues.car_tipo1
+							var Tipo2 = cart[i].dataValues.car_tipo2
+							if(Tipo2 != null && Tipo2 != undefined && Tipo2 != ''){
+								Tipo = Tipo+' e '+Tipo2
+							}
+
+							var Status = cart[i].dataValues.car_status
+							if(Status == 0){
+								Status = "Criado"
+							}
+							if(Status == 1){
+								Status = "Cadastrado"
+							}
+
+							var Aprovacao = cart[i].dataValues.car_aprovacao
+							if(Aprovacao == 0){
+								Aprovacao = "Pendente"
+							}
+							if(Aprovacao == 1){
+								Aprovacao = "Aprovado"
+							}
+							if(Aprovacao == 2){
+								Aprovacao = "Reprovado"
+							}
+
+							obj = {
+								identificacao: cart[i].dataValues.car_identificacao,
+								numero: cart[i].dataValues.car_numero,
+								cvc: cart[i].dataValues.car_cvc,
+								validade: dataValidade,
+								tipo: Tipo,
+								status: Status,
+								aprovacao: Aprovacao,
+								mensagem: cart[i].dataValues.car_mensagem
+							}
+							array2[i] = obj;
+						}
+
+						if(quantidade > 0){
+							res.json({
+								quantidade: quantidade,
+								cartoes: array2
+							});
+						}else{
+							res.json({
+								erro: false,
+								mensagem: "Você ainda não possui cartões cadastrados"
+							})
+						}
+
+
+				}).catch(err =>{
+					res.json({
+						erro: true,
+						mensagem: "Erro ao buscar cartões"
+					})
+				})
+
+			}
+
+
+		}).catch(err =>{
+			res.status(400).json({
+				erro: true,
+				mensagem: "Usuário não encontrado"
+			})
+		})
+
+
+	}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "Por favor, envie os dados corretamente"
+		})
+	}
+
+
+});
+
 app.delete("/deletarConta", (req, res) =>{
 	cpf = req.body.cpf
 	senha = req.body.senha
