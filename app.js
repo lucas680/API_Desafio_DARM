@@ -1472,6 +1472,83 @@ app.delete("/deletarConta", (req, res) =>{
 });
 
 
+app.delete("/deletarCartao", async(req, res) => {
+
+	cpf = req.body.cpf
+	senha = req.body.senha
+	numero = req.body.numero
+
+	if(validatecpf(cpf) && validateNumeroCartao(numero) && senha != ''){
+		senha = criptografar(senha);
+
+
+		await users.findAll({
+			where: {
+				pes_cpf: cpf,
+				pes_senha: senha,
+				pes_status: 0
+			}
+		}).then(async(user) =>{
+			user = Object.assign({}, user);
+			user = Object.assign({}, user[0]);
+			var id = user.dataValues.pes_id;
+
+			if(user.dataValues.pes_cpf == cpf){
+
+				await cartao.findAll({
+					where: {
+						pes_id: id,
+						car_numero: numero
+					}
+				}).then(async(cart) =>{
+
+					cart = Object.assign({}, cart);
+					cart = Object.assign({}, cart[0])
+					var idCartao = cart.dataValues.car_id
+
+					if(cart.dataValues.car_numero == numero){
+						await cartao.destroy({
+							where: {
+								car_numero: numero
+							}
+						}).then(()=>{
+							res.json({
+								erro: false,
+								mensagem: "Cartão deletado com sucesso"
+							});
+						}).catch(err =>{
+							res.status(400).json({
+								erro: true,
+								mensagem: "Erro ao deletar cartão"
+							});
+						});
+					}
+
+				}).catch(err =>{
+					res.status(400).json({
+						erro: true,
+						mensagem: "Cartão não encontrado"
+					})
+				});
+
+			}
+
+		}).catch(err =>{
+			res.status(400).json({
+				erro: true,
+				mensagem: "Usuário não encontrado"
+			})
+		});
+
+	}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "Por favor, envie os dados corretamente"
+		})
+	}
+
+
+});
 
 
 
