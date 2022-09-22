@@ -13,11 +13,11 @@ const endereco = db.define('enderecos', {
 		primaryKey: true
 	},
 	end_cidade: {
-		type: Sequelize.STRING(200),
+		type: Sequelize.STRING(100),
 		allowNull: false
 	},
 	end_logradouro: {
-		type: Sequelize.STRING(20),
+		type: Sequelize.STRING(100),
 		allowNull: false
 	},
 	end_numero: {
@@ -25,7 +25,7 @@ const endereco = db.define('enderecos', {
 		allowNull: false
 	},
 	end_bairro: {
-		type: Sequelize.STRING(20),
+		type: Sequelize.STRING(100),
 		allowNull: false
 	},
 	end_cep: {
@@ -50,8 +50,15 @@ estado.hasMany(endereco, {
 });
 
 //criar a tabela quando não existir
-endereco.sync();
+async function criaEndereco(){
+	await endereco.sync().then(()=>{
+		console.log("TABELA ENDERECOS CRIADA COM SUCESSO");
+	}).catch(()=>{
+		console.log("\033[31mERRO AO CRIAR TABELA ENDERECOS, NECESSÁRIO REINICIAR SERVIDOR \033[0m");
+	});
+}
 
+criaEndereco();
 
 
 module.exports = endereco;

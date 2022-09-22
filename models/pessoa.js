@@ -43,7 +43,11 @@ const users = db.define('pessoas', {
 
 //criar a tabela quando não existir
 async function criarPessoa() {
-	await users.sync();
+	await users.sync().then(()=>{
+		console.log("TABELA PESSOAS CRIADA COM SUCESSO");
+	}).catch(()=>{
+		console.log("\033[31mERRO AO CRIAR TABELA PESSOAS, NECESSÁRIO REINICIAR SERVIDOR \033[0m");
+	});
 }
 
 criarPessoa();

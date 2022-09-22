@@ -39,7 +39,11 @@ pessoa.hasMany(telefone, {
 
 //criar a tabela quando não existir
 async function criarTelefone() {
-	await telefone.sync();
+	await telefone.sync().then(()=>{
+		console.log("TABELA TELEFONES CRIADA COM SUCESSO");
+	}).catch(()=>{
+		console.log("\033[31mERRO AO CRIAR TABELA TELEFONES, NECESSÁRIO REINICIAR SERVIDOR \033[0m");
+	});
 }
 
 criarTelefone();

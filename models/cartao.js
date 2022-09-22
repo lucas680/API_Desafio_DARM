@@ -6,7 +6,7 @@ const pessoa = require('./pessoa')
 
 const cartao = db.define('cartoes', {
 	car_id: {
-		type: Sequelize.INTEGER(11),
+		type: Sequelize.INTEGER(12),
 		autoIncrement: true,
 		allowNull: false,
 		primaryKey: true
@@ -41,7 +41,7 @@ const cartao = db.define('cartoes', {
 		allowNull: false
 	},
 	car_status: {
-		type: Sequelize.INTEGER(1),
+		type: Sequelize.BOOLEAN,
 		allowNull: false
 	},
 	car_aprovacao: {
@@ -65,7 +65,11 @@ pessoa.hasMany(cartao, {
 
 //criar a tabela quando não existir
 async function criarCartao() {
-	await cartao.sync();
+	await cartao.sync().then(()=>{
+		console.log("TABELA CARTOES CRIADA COM SUCESSO");
+	}).catch(()=>{
+		console.log("\033[31mERRO AO CRIAR TABELA CARTOES, NECESSÁRIO REINICIAR SERVIDOR \033[0m");
+	});
 }
 
 criarCartao();

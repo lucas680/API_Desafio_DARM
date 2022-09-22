@@ -1,6 +1,13 @@
+
+const DB = "banco";
+const User = "root";
+const Pass = "secret";
+const Host = "localhost";
+
+
 const Sequelize = require('sequelize');
-const conn = new Sequelize("banco", "root", "secret", {
-	host: 'localhost',
+const conn = new Sequelize(DB, User, Pass, {
+	host: Host,
 	dialect: 'mysql'
 });
 

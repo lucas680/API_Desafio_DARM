@@ -8,12 +8,7 @@ const fs = require('fs');
 const users = require('./models/pessoa');
 const estado = require('./models/estado');
 const telefone = require('./models/telefone');
-
-//inserir estados após criar a tabela
-require('./models/criarEstados');
-
 const cartao = require('./models/cartao');
-
 const endereco = require('./models/endereco');
 
 app.use(express.json());
@@ -87,7 +82,7 @@ function validateTipo(tipo, num){
 
 	if(num === 1){
 
-		if(tipo == 'Credito' || tipo == 'Debito' || tipo == 'Poupança'){
+		if(tipo == 'Crédito' || tipo == 'Débito' || tipo == 'Poupança'){
 			return true;
 		}else{
 			return false;
@@ -96,7 +91,7 @@ function validateTipo(tipo, num){
 	}
 	else if(num === 2){
 
-		if(tipo == 'Credito' || tipo == 'Debito' || tipo == 'Poupança' || tipo == ''){
+		if(tipo == 'Crédito' || tipo == 'Débito' || tipo == 'Poupança' || tipo == ''){
 			return true;
 		}else{
 			return false;
@@ -114,7 +109,7 @@ function validateTipo(tipo, num){
 function validateIdentificacao(identificacao){
 
 	if(identificacao == 'Visa' || identificacao == 'MasterCard' || identificacao == 'Elo' || 
-		identificacao == 'Hibercard' || identificacao == 'American Express'){
+		identificacao == 'Hipercard' || identificacao == 'American Express'){
 		return true;
 	}else{
 		return false;
@@ -158,10 +153,6 @@ app.post("/cadastrar", async(req, res)=>{
 
 	var nome = req.body.nome
 	var tipo = req.body.tipo
-	if(tipo === undefined){
-		tipo = 'corrente'
-	}
-
 	var status = req.body.status
 	var email = req.body.email
 	var senha = req.body.senha
@@ -169,8 +160,10 @@ app.post("/cadastrar", async(req, res)=>{
 	var cpf = req.body.cpf
 
 
+	if(tipo != undefined && tipo != null && tipo != ''){
 	//tipo apenas com a primeira letra maiúscula
 	tipo = tipo[0].toUpperCase()+tipo.substring(1).toLowerCase()
+	}
 
 	var Telefone = req.body.telefone
 
@@ -181,9 +174,10 @@ app.post("/cadastrar", async(req, res)=>{
 	var bairro = req.body.bairro
 	var cep = req.body.cep
 
-	if(nome != '' && (tipo == 'Corrente' || tipo == 'Poupança') && (status == '0' || status == '1') && validateEmail(email) &&
-(senha == senha2) && senha != '' && validatecpf(cpf) && validateTelefone(Telefone) && cidade != '' && (Estado > 0 && Estado < 28) && 
-logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep)){
+
+	if(nome != '' && (((tipo == 'Corrente' || tipo == 'Poupança') && status == '0') || ((tipo == undefined || tipo == null || tipo == '') && status == '1')) && (validateEmail(email) || email == '') &&
+((senha == senha2) && senha != '' && senha.length > 7) && (validatecpf(cpf) && cpf.length == 14) && validateTelefone(Telefone) && cidade != '' && (Estado > 0 && Estado < 28) && 
+logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep) && cep.length == 8){
 
 		senha = criptografar(senha);
 		cpf = convertercpf(cpf);
@@ -327,9 +321,9 @@ app.post("/criarCartao", (req, res) =>{
 		tipo2 = tipo2[0].toUpperCase()+tipo2.substring(1).toLowerCase()
 	}
 
-	if(validatecpf(cpf) && validateNumeroCartao(numero) && validateTipo(tipo1, 1) && validateTipo(tipo2, 2) && 
+	if(validatecpf(cpf) && cpf.length == 14 && validateNumeroCartao(numero) && validateTipo(tipo1, 1) && validateTipo(tipo2, 2) && tipo1 != tipo2 && 
 		validateIdentificacao(identificacao) && !isNaN(cvc) && cvc.length == 3 && (validade == 2 || validade == 4 ||
-			validade == 5 || validade == 6) && senha != ''){
+			validade == 5 || validade == 6) && senha != '' && senha.length > 7){
 			senha = criptografar(senha);
 
 		// obs: O status é para somente usuários (status == 0) criarem cartões
@@ -470,7 +464,8 @@ app.patch("/redefinirSenha", async(req, res) =>{
 	var senha = req.body.senha
 	var senha2 = req.body.senha2
 
-	if(nome != '' && validateEmail(email) && validatecpf(cpf) && senha != '' && senha == senha2){
+	if(nome != '' && (validateEmail(email) || email == '') && validatecpf(cpf) && cpf.length == 14 &&
+	 senha != '' && senha == senha2 && senha.length > 7){
 
 		senha = criptografar(senha)
 
@@ -637,7 +632,7 @@ app.patch("/cadastrarCartao", (req, res)=>{
 	senha = req.body.senha
 	numero = req.body.numero
 
-	if(validatecpf(cpf) && senha != '' && validateNumeroCartao(numero)){
+	if(validatecpf(cpf) && cpf.length && senha != '' && senha.length > 7 && validateNumeroCartao(numero)){
 		senha = criptografar(senha)
 
 		users.findAll({
@@ -731,7 +726,8 @@ app.patch("/aprovarCadastro", (req, res)=>{
 	mensagem = req.body.mensagem
 	senha = req.body.senha
 
-	if(validatecpf(cpf) && validateNumeroCartao(numero) && (status == 1 || (status == 2 && mensagem != '')) && senha != ''){
+	if(validatecpf(cpf) && cpf.length == 14 && validateNumeroCartao(numero) && (status == 1 || (status == 2 && mensagem != '')) &&
+	 senha != '' && senha.length > 7){
 		senha = criptografar(senha);
 
 		users.findAll({
@@ -827,10 +823,14 @@ app.patch("/aprovarCadastro", (req, res)=>{
 app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
 
         var foto = '';
+        var TipoDeFoto = '';
         if(req.file){
         	const {file} = req
         	foto = file.filename
+        	TipoDeFoto = file.mimetype
         }
+
+        console.log(TipoDeFoto)
         
         var nome = req.body.nome
         var email = req.body.email
@@ -847,10 +847,11 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
         var bairro = req.body.bairro
         var cep = req.body.cep
 
-        if(validatecpf(cpf) && senha != ''){
+        if(validatecpf(cpf) && cpf.length == 14 && senha != '' && senha.length > 7){
         	senha = criptografar(senha);
 
-        	if(foto != null && foto != undefined && foto != ''){
+        	if(foto != null && foto != undefined && foto != '' && (TipoDeFoto == 'image/png' ||
+        	 TipoDeFoto == 'image/jpeg')){
         		// pesquisar na bd se já tem foto, se tiver pagar e adicionar a nova
 
         		await users.findAll({
@@ -901,9 +902,22 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
 
         			res.status(400).json({
         				erro: true,
-        				mensagem: "Erro ao verificar usuário em editar foto"
+        				mensagem: "Erro ao verificar usuário"
         			})
         		});
+
+        	}else{
+				
+        		//apagar foto
+        				const caminho = './imagens/'+foto;
+        				fs.unlink(caminho, (err)=>{
+        					if(err){
+        						res.json({
+        							erro: true,
+        							mensagem: "Erro ao remover imagem"
+        						})
+        					}
+        				})
 
         	}
 
@@ -937,7 +951,7 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
         		}).catch(()=>{
         			res.status(400).json({
         				erro: true,
-        				mensagem: "Erro ao verificar usuário em editar nome"
+        				mensagem: "Erro ao verificar usuário"
         			})
         		});
 
@@ -993,7 +1007,7 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
         		}).catch(()=>{
         			res.status(400).json({
         				erro: true,
-        				mensagem: "Erro ao verificar usuário em editar email"
+        				mensagem: "Erro ao verificar usuário"
         			})
         		});
 
@@ -1036,12 +1050,12 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
         		}).catch(()=>{
         			res.status(400).json({
         				erro: true,
-        				mensagem: "Erro ao verificar usuário em editar telefone"
+        				mensagem: "Erro ao verificar usuário"
         			})
         		});
         	}
 
-        	if(cidade != '' && logradouro != '' && bairro != '' && !isNaN(numero) && !isNaN(cep) &&
+        	if(cidade != '' && logradouro != '' && bairro != '' && !isNaN(numero) && !isNaN(cep) && cep.length == 8 &&
         		(Estado > 0 && Estado < 28)){
 
         		await users.findAll({
@@ -1077,7 +1091,7 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
         		}).catch(()=>{
         			res.status(400).json({
         				erro: true,
-        				mensagem: "Erro ao verificar usuário em editar endereço"
+        				mensagem: "Erro ao verificar usuário"
         			})
         		});
 
@@ -1115,7 +1129,7 @@ app.get("/login", (req, res) =>{
 	var cpf = req.body.cpf
 	var senha = req.body.senha
 
-	if(validatecpf(cpf) && senha != ''){
+	if(validatecpf(cpf) && cpf.length == 14 && senha != '' && senha.length > 7){
 
 		senha = criptografar(senha)
 
@@ -1162,7 +1176,7 @@ app.get("/visualizarClientes", (req, res)=>{
 	indicador = req.body.indicador
 	indicador2 = req.body.indicador2
 
-	if(validatecpf(cpf) && senha != '' && ((indicador == 'E' && indicador2 > 0 && indicador2 < 28) || 
+	if(validatecpf(cpf) && cpf.length == 14 && senha != '' && senha.length > 7 && ((indicador == 'E' && indicador2 > 0 && indicador2 < 28) || 
 		(indicador == 'Q' && indicador2 >= 0 && indicador2 < 7) || indicador == 'A')){
 
 		senha = criptografar(senha);
@@ -1173,8 +1187,13 @@ app.get("/visualizarClientes", (req, res)=>{
 				pes_senha: senha,
 				pes_status: 1
 			}
-		}).then(()=>{
+		}).then((user)=>{
+			user = Object.assign({}, user);
+			user = Object.assign({}, user[0]);
 
+			if(user.dataValues.pes_cpf == cpf){
+
+		
 			if(indicador == 'E'){
 
 				endereco.findAll({
@@ -1360,6 +1379,8 @@ app.get("/visualizarClientes", (req, res)=>{
 
 			}
 
+		}
+
 		}).catch(err =>{
 
 			res.status(400).json({
@@ -1386,7 +1407,7 @@ app.get("/visualizarCartoes", async(req, res)=>{
 	cpf = req.body.cpf
 	senha = req.body.senha
 
-	if(validatecpf(cpf) && senha != ""){
+	if(validatecpf(cpf) && cpf.length == 14 && senha != "" && senha.length > 7){
 		senha = criptografar(senha);
 
 		await users.findAll({
@@ -1503,7 +1524,7 @@ app.delete("/deletarConta", (req, res) =>{
 	cpf = req.body.cpf
 	senha = req.body.senha
 
-	if(validatecpf(cpf) && senha != ''){
+	if(validatecpf(cpf) && cpf.length == 14 && senha != '' && senha.length > 7){
 		senha = criptografar(senha);
 
 		users.findAll({
@@ -1596,7 +1617,7 @@ app.delete("/deletarCartao", async(req, res) => {
 	senha = req.body.senha
 	numero = req.body.numero
 
-	if(validatecpf(cpf) && validateNumeroCartao(numero) && senha != ''){
+	if(validatecpf(cpf) && cpf.length == 14 && validateNumeroCartao(numero) && senha != '' && senha.length > 7){
 		senha = criptografar(senha);
 
 
