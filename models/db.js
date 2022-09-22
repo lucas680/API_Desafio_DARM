@@ -1,7 +1,8 @@
+//obs: Deixei os dados do banco pois não são restritos
 
 const DB = "banco";
 const User = "root";
-const Pass = "secret";
+const Pass = "";
 const Host = "localhost";
 
 
