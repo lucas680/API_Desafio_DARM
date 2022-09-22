@@ -1420,7 +1420,7 @@ app.get("/visualizarCartoes", async(req, res)=>{
 			user = Object.assign({}, user[0]);
 			var id = user.dataValues.pes_id
 
-			if(user.dataValues.pes_cpf == cpf){
+			if(user.dataValues.pes_cpf == cpf && user.dataValues.pes_status == '0'){
 
 				await cartao.findAll({
 					where: {
@@ -1477,6 +1477,109 @@ app.get("/visualizarCartoes", async(req, res)=>{
 								mensagem: cart[i].dataValues.car_mensagem
 							}
 							array2[i] = obj;
+						}
+
+						if(quantidade > 0){
+							res.json({
+								quantidade: quantidade,
+								cartoes: array2
+							});
+						}else{
+							res.json({
+								erro: false,
+								mensagem: "Você ainda não possui cartões cadastrados"
+							})
+						}
+
+
+				}).catch(err =>{
+					res.json({
+						erro: true,
+						mensagem: "Erro ao buscar cartões"
+					})
+				})
+
+			}else if(user.dataValues.pes_cpf == cpf && user.dataValues.pes_status == '1'){
+
+				await cartao.findAll({
+					where: {
+						car_aprovacao: '0'
+					}
+				}).then(async(cart) =>{
+					cart = Object.assign({}, cart);
+					var quantidade = Object.keys(cart).length;
+						var array2 = []
+						var obj = {}
+
+						for(var i = 0; i<quantidade; i++){
+
+							await users.findAll({
+								where: {
+									pes_id: cart[i].dataValues.pes_id
+								}
+							}).then((Usuario)=>{
+								Usuario = Object.assign({}, Usuario);
+								Usuario = Object.assign({}, Usuario[0]);
+
+								if(Usuario.dataValues.pes_id == cart[i].dataValues.pes_id){
+
+							var mes = String(cart[i].dataValues.car_mes_validade)
+							if(mes.length == 1){
+								mes = '0'+mes
+							}
+							var dataValidade = mes+'/'+
+							cart[i].dataValues.car_ano_validade
+
+							var Tipo = cart[i].dataValues.car_tipo1
+							var Tipo2 = cart[i].dataValues.car_tipo2
+							if(Tipo2 != null && Tipo2 != undefined && Tipo2 != ''){
+								Tipo = Tipo+' e '+Tipo2
+							}
+
+							var Status = cart[i].dataValues.car_status
+							if(Status == 0){
+								Status = "Criado"
+							}
+							if(Status == 1){
+								Status = "Cadastrado"
+							}
+
+							var Aprovacao = cart[i].dataValues.car_aprovacao
+							if(Aprovacao == 0){
+								Aprovacao = "Pendente"
+							}
+							if(Aprovacao == 1){
+								Aprovacao = "Aprovado"
+							}
+							if(Aprovacao == 2){
+								Aprovacao = "Reprovado"
+							}
+
+							obj = {
+								nome: Usuario.dataValues.pes_nome,
+								email: Usuario.dataValues.pes_email,
+								cpf: Usuario.dataValues.pes_cpf,
+								identificacao: cart[i].dataValues.car_identificacao,
+								numero: cart[i].dataValues.car_numero,
+								cvc: cart[i].dataValues.car_cvc,
+								validade: dataValidade,
+								tipo: Tipo,
+								status: Status,
+								aprovacao: Aprovacao,
+								mensagem: cart[i].dataValues.car_mensagem
+							}
+							array2[i] = obj;
+
+								}
+
+							}).catch(err =>{
+								res.status(400).json({
+									erro: true,
+									mensagem: "Erro ao procurar usuários"
+								})
+							})
+
+							
 						}
 
 						if(quantidade > 0){
