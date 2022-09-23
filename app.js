@@ -21,10 +21,10 @@ const validateEmail = (email) => {
 
 //função para validar cpf
 const validatecpf = (cpf) => {
-	var p1 = cpf.substring(0, 3);
-	var p2 = cpf.substring(4, 7);
-	var p3 = cpf.substring(8, 11);
-	var p4 = cpf.substring(12, 14);
+	var p1 = cpf.substr(0, 3);
+	var p2 = cpf.substr(4, 3);
+	var p3 = cpf.substr(8, 3);
+	var p4 = cpf.substr(12, 2);
 
 	if(!isNaN(p1) && !isNaN(p2) && !isNaN(p3) && !isNaN(p4)){
 		return true;
@@ -34,11 +34,10 @@ const validatecpf = (cpf) => {
 }
 
 const convertercpf = (cpf) => {
-	var p1 = cpf.substring(0, 3);
-	var p2 = cpf.substring(4, 7);
-	var p3 = cpf.substring(8, 11);
-	var p4 = cpf.substring(12, 14);
-
+	var p1 = cpf.substr(0, 3);
+	var p2 = cpf.substr(4, 3);
+	var p3 = cpf.substr(8, 3);
+	var p4 = cpf.substr(12, 2);
 	var Cpf = p1+'.'+p2+'.'+p3+'-'+p4;
 
 	return Cpf;
@@ -46,10 +45,10 @@ const convertercpf = (cpf) => {
 
 //função para validar telefone
 const validateTelefone = (tel) => {
-	var ddd = tel.substring(1, 3);
-	var tip = tel.substring(5, 6);
-	var n1 = tel.substring(6, 10);
-	var n2 = tel.substring(11, 15);
+	var ddd = tel.substr(1, 2);
+	var tip = tel.substr(5,1);
+	var n1 = tel.substr(6,4);
+	var n2 = tel.substr(11, 4);
 
 	if(!isNaN(ddd) && !isNaN(tip) && !isNaN(n1) && !isNaN(n2)){
 		return true;
@@ -61,14 +60,14 @@ const validateTelefone = (tel) => {
 //função para validar número do cartão
 
 function validateNumeroCartao(numero){
-	var n1 = numero.substring(0, 4);
-	var n2 = numero.substring(5, 9);
-	var n3 = numero.substring(10, 14);
-	var n4 = numero.substring(15, 19);
+	var n1 = numero.substr(0, 4);
+	var n2 = numero.substr(5, 4);
+	var n3 = numero.substr(10, 4);
+	var n4 = numero.substr(15, 4);
 
-	var E1 = numero.substring(4, 5);
-	var E2 = numero.substring(9, 10);
-	var E3 = numero.substring(14, 15);
+	var E1 = numero.substr(4, 1);
+	var E2 = numero.substr(9, 1);
+	var E3 = numero.substr(14, 1);
 
 	if(!isNaN(n1) && !isNaN(n2) && !isNaN(n3) && !isNaN(n4) && E1 == ' ' && E2 == ' ' && E3 == ' '){
 		return true;
@@ -162,7 +161,7 @@ app.post("/cadastrar", async(req, res)=>{
 
 	if(tipo != undefined && tipo != null && tipo != ''){
 	//tipo apenas com a primeira letra maiúscula
-	tipo = tipo[0].toUpperCase()+tipo.substring(1).toLowerCase()
+	tipo = tipo[0].toUpperCase()+tipo.substr(1).toLowerCase()
 	}
 
 	var Telefone = req.body.telefone
@@ -244,10 +243,10 @@ logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep) && cep.length 
 
 				//cadastro do telefone
 
-				var ddd = Telefone.substring(1, 3);
-				var tip = Telefone.substring(5, 6);
-				var n1 = Telefone.substring(6, 10);
-				var n2 = Telefone.substring(11, 15);
+				var ddd = Telefone.substr(1, 2);
+				var tip = Telefone.substr(5,1);
+				var n1 = Telefone.substr(6,4);
+				var n2 = Telefone.substr(11, 4);
 
 				await telefone.create({
 					tel_prefixo: '55',
@@ -316,9 +315,9 @@ app.post("/criarCartao", (req, res) =>{
 	var senha = req.body.senha
 
 	//tipo apenas com a primeira letra maiúscula
-	tipo1 = tipo1[0].toUpperCase()+tipo1.substring(1).toLowerCase()
+	tipo1 = tipo1[0].toUpperCase()+tipo1.substr(1).toLowerCase()
 	if(tipo2 != ''){
-		tipo2 = tipo2[0].toUpperCase()+tipo2.substring(1).toLowerCase()
+		tipo2 = tipo2[0].toUpperCase()+tipo2.substr(1).toLowerCase()
 	}
 
 	if(validatecpf(cpf) && cpf.length == 14 && validateNumeroCartao(numero) && validateTipo(tipo1, 1) && validateTipo(tipo2, 2) && tipo1 != tipo2 && 
@@ -1030,10 +1029,10 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
 
         			if(user.dataValues.pes_cpf == cpf){
 
-        				var ddd = Telefone.substring(1, 3);
-						var tip = Telefone.substring(5, 6);
-						var n1 = Telefone.substring(6, 10);
-						var n2 = Telefone.substring(11, 15);
+        					var ddd = Telefone.substr(1, 2);
+						var tip = Telefone.substr(5,1);
+						var n1 = Telefone.substr(6,4);
+						var n2 = Telefone.substr(11, 4);
 
 						await telefone.update({
 							tel_ddd: ddd,
