@@ -1,2 +1,0 @@
-
-const estado = require('./estado')
