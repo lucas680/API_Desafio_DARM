@@ -49,7 +49,7 @@ const validateTelefone = (tel) => {
 	var ddd = tel.substring(1, 3);
 	var tip = tel.substring(5, 6);
 	var n1 = tel.substring(6, 10);
-	var n2 = tel.substring(11, 14);
+	var n2 = tel.substring(11, 15);
 
 	if(!isNaN(ddd) && !isNaN(tip) && !isNaN(n1) && !isNaN(n2)){
 		return true;
