@@ -1,4 +1,4 @@
-COMO RODAR O PROJETO BAIXADO
+### COMO RODAR O PROJETO BAIXADO
 
 1) Primeiro é necessário ter o node js instalado na máquina.
 
