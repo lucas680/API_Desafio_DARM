@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Banco</title>
+		<meta name="author" content="Francisco Lucas Pereira Ribeiro">
+		<meta name="description" content="Esta é uma página web simples criada como frontEnd para o desafio darm LABS">
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+		<link rel="stylesheet" type="text/css" href="fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" type="text/css" href="fontawesome/css/solid.css">
+		<link rel="stylesheet" type="text/css" href="bootstrap-5/css/bootstrap.min.css">
+		<script src="bootstrap-5/js/bootstrap.bundle.min.js"></script>
+		<script src="js/mascaras.js"></script>
+		<!--=============== LOGO ===============-->
+  		<link rel="Ícone com inical B de banco, criado utilizando o favicon" href="favicon.ico" type="image/x-icon">
+
+		<!--=============== JQUERY para conectar com API ===============-->
+    	<script src="js/jquery-3.6.0.min.js"></script>
+	</head>
+	<body>
+
+		<script src="js/login-in.js" defer></script>
+
+			<main>
+				<div class="container"><br><br><br>
+				<div class="formulario">
+				<div class="Form2 col-6">
+					<h1>Fazer Login</h1>
+
+				   <div class="col-12">
+				    <label for="cpf" class="form-label">CPF</label>
+				    <input type="text" class="form-control" id="cpf" placeholder="XXX.XXX.XXX-XX" minlength="14" maxlength="14" onkeyup="mascara_cpf()" required>
+				  </div>
+				  <div class="col-12">
+				    <label for="Senha" class="form-label">Senha</label>
+				    <input type="password" class="form-control" id="senha" maxlength="200" placeholder="Sua senha (mín de 8 caracteres)" required>
+				  </div>
+				  <div class="col-12"><br>
+				  	<p>Não tem uma conta? <a href="criarConta.html">Fazer cadastro</a></p>
+				  	<p>Esqueçeu a senha? <a href="redefinirSenha.html">Redefinir</a></p>
+				  </div>
+
+				  <br>
+				  <button type="submit" class="btn btn-warning" onclick="FazerLogin()">Logar</button>
+				</div>
+				</div><br><br>
+				</div>
+			</main>
+			<div class="container">
+		  <footer class="py-3 my-4">
+		    <p class="text-center text-muted" _msthash="533715" _msttexthash="271583">© 2022 - Desenvolvido por <a href="https://github.com/lucas680" target="_blank">Lucas Pereira</a>.</p>
+		  </footer>
+		</div>
+
+			<script type="text/javascript">
+				var myCarousel = document.querySelector('#myCarousel')
+				var carousel = new bootstrap.Carousel(myCarousel, {
+				  interval: 2000,
+				  wrap: true
+				})
+
+				var myModal = new bootstrap.Modal(document.getElementById('LoginModal'), {
+				  keyboard: false
+				})
+
+				function Logar(){
+					myModal.show()
+				}
+
+			</script>
+	</body>
+</html>

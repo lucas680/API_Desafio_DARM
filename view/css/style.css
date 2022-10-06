@@ -1,0 +1,82 @@
+.fundo-carousel{
+	background-color: rgba(0, 0, 0, 0.6);
+	padding: 10%;
+	border-radius: 20px;
+}
+
+.modal-header{
+	color: white;
+}
+
+.formulario {
+	display: flex;
+	justify-content: center;
+}
+
+.formulario h1{
+	text-align: center;
+	margin-bottom: 30px;
+}
+
+.Form2{
+	padding: 30px;
+	border-radius: 20px;
+	background-color: ghostwhite;
+}
+
+.form-label{
+	color: black;
+}
+
+/* parte dos cartoes do usuario */
+.cartoes{
+	text-align: center;
+}
+
+.cartoes h1{
+	margin-top: 50px;
+}
+
+.cartoes2{
+	display: flex;
+	justify-content: center;
+}
+
+.card{
+	margin: 20px;
+}
+
+.card button{
+	margin: 0 2px;
+}
+
+.NaoTemCart{
+	text-align: center;
+	height: 50vh;
+}
+.NaoTemCart h1{
+	margin-bottom: 100px;
+}
+
+/* Formulario de pesquisa */
+
+.formulario2 {
+	display: flex;
+	justify-content: center;
+}
+
+.formulario2 h1{
+	text-align: center;
+	margin-bottom: 30px;
+}
+
+/* Deixar input invisivel */
+
+.Invisivel{
+  height:0;
+  width:0;
+  visibility: hidden;
+  padding:0;
+  margin:0;
+  float:right;
+}

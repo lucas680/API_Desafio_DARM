@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Banco</title>
+		<meta name="author" content="Francisco Lucas Pereira Ribeiro">
+		<meta name="description" content="Esta é uma página web simples criada como frontEnd para o desafio darm LABS">
+		<link rel="stylesheet" type="text/css" href="../css/style.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/solid.css">
+		<link rel="stylesheet" type="text/css" href="../bootstrap-5/css/bootstrap.min.css">
+		<script src="../bootstrap-5/js/bootstrap.bundle.min.js"></script>
+		<script src="../js/mascaras.js"></script>
+		<!--=============== LOGO ===============-->
+  		<link rel="Ícone com inical B de banco, criado utilizando o favicon" href="../favicon.ico" type="image/x-icon">
+
+		<!--=============== JQUERY para conectar com API ===============-->
+    	<script src="../js/jquery-3.6.0.min.js"></script>
+	</head>
+	<body>
+
+		<script src="../js/login-in.js"></script>
+		<script type="text/javascript">
+
+			window.onload = function(){
+				$.ajax({
+					      url: "http://localhost:8082/pegarDados",
+					      method: "GET",
+					      data: {
+					        cpf: localStorage.getItem("user_cpf")
+					      },
+					      contentType: "application/json",
+					      dataType: "json",
+					      error: function(e){
+					      	if(e.responseJSON.mensagem != ''){
+					      	alert(e.responseJSON.mensagem);
+					      	}
+
+					      	$.ajax({
+						      url: "http://localhost:8082/estados",
+						      method: "GET",
+						      contentType: "application/json",
+						      dataType: "json",
+						      error: function(e){
+						      	if(e.responseJSON.mensagem != ''){
+						      	alert(e.responseJSON.mensagem);
+						      	}
+						      },
+						      success: function(s2){
+						      	Estados = document.getElementById("estado");
+						      	opts = "<option value='' disabled selected>Selecione</option>";
+						      	for(i = 0; i<s2.estados.length; i++){
+
+						      			opts += "<option value='"+s2.estados[i].id+"'>"+s2.estados[i].nome+"</option>"
+						      		
+						      	}
+
+						      	Estados.innerHTML = opts;
+						        
+						      }
+						    });
+					      },
+					      success: function(s){
+					      	
+					      	document.getElementById("Nome").value = s.nome
+					      	document.getElementById("Email").value = s.email
+					      	document.getElementById("telefone").value = "("+s.Tddd+") "+s.Ttipo+String(s.Tnumero).substr(0,4)+"-"+String(s.Tnumero).substr(4,4);
+					      	document.getElementById("cidade").value = s.cidade;
+					      	document.getElementById("logradouro").value = s.logradouro;
+					      	document.getElementById("numero").value = s.numero;
+					      	document.getElementById("bairro").value = s.bairro;
+					      	document.getElementById("cep").value = s.cep;
+
+					   		if(s.foto != null){
+					   			document.getElementById("foto").src = "../../imagens/"+s.foto;
+					   		}
+
+					      	$.ajax({
+						      url: "http://localhost:8082/estados",
+						      method: "GET",
+						      contentType: "application/json",
+						      dataType: "json",
+						      error: function(e){
+						      	if(e.responseJSON.mensagem != ''){
+						      	alert(e.responseJSON.mensagem);
+						      	}
+						      },
+						      success: function(s2){
+						      	Estados = document.getElementById("estado");
+						      	opts = "<option value='' disabled>Selecione</option>";
+						      	for(i = 0; i<s2.estados.length; i++){
+
+						      		if(s.estado == s2.estados[i].id){
+						      			opts += "<option value='"+s2.estados[i].id+"' selected>"+s2.estados[i].nome+"</option>"
+						      		}else{
+						      			opts += "<option value='"+s2.estados[i].id+"'>"+s2.estados[i].nome+"</option>"	
+						      		}
+						      		
+						      	}
+
+						      	Estados.innerHTML = opts;
+						        
+						      }
+						    });
+					        
+					      }
+					    });
+			}
+
+			function MudarSenha() {
+				var con = confirm("Deseja realmente modificar?");
+				if(con){
+					  var Cpf = localStorage.getItem("user_cpf");
+					  var Senha = document.getElementById("Senha").value;
+					  var Senha2 = document.getElementById("Senha2").value;
+
+					  if (Nome && Email && Cpf && Senha && Senha2) {
+					  	$.ajax({
+					      url: "http://localhost:8082/pegarDados",
+					      method: "GET",
+					      data: {
+					        cpf: Cpf
+					      },
+					      contentType: "application/json",
+					      dataType: "json",
+					      error: function(e){
+					      	if(e.responseJSON.mensagem != ''){
+					      	alert(e.responseJSON.mensagem);
+					      	}
+					      },
+					      success: function(s){
+					      	
+					      	$.ajax({
+					      url: "http://localhost:8082/redefinirSenha",
+					      method: "GET",
+					      data: {
+					      	nome: s.nome,
+					      	email: s.email,
+					        cpf: Cpf,
+					        senha: Senha,
+					        senha2: Senha2
+					      },
+					      contentType: "application/json",
+					      dataType: "json",
+					      error: function(e){
+					      	if(e.responseJSON.mensagem != ''){
+					      	alert(e.responseJSON.mensagem);
+					      	}
+					      },
+					      success: function(s){
+					      	alert(s.mensagem);
+					        location.href = "EditarPerfil.html";
+					        
+					      }
+					    });
+					        
+					      }
+					    });
+
+					    
+					  }else{
+					    alert("Preencha todos os campos!")
+					  }
+				}
+			}
+
+			function Editar(){
+				  var Nome = document.getElementById("Nome").value;
+				  var Email = document.getElementById("Email").value;
+				  var Cpf = localStorage.getItem("user_cpf");
+				  var Senha = localStorage.getItem("user_senha");
+				  var Telefone = document.getElementById("telefone").value;
+
+				  var Estado = document.getElementById("estado");
+				  Estado = Estado.options[Estado.selectedIndex].value
+				  var Cidade = document.getElementById("cidade").value;
+				  var Logradouro = document.getElementById("logradouro").value;
+				  var Numero = document.getElementById("numero").value;
+				  var Bairro = document.getElementById("bairro").value;
+				  var Cep = document.getElementById("cep").value;
+
+
+				  if (Nome || Email || Telefone || (Estado && Cidade && Logradouro && Numero 
+				  	&& Bairro && Cep)) {
+
+
+				    $.ajax({
+				      url: "http://localhost:8082/editarPerfil",
+				      method: "GET",
+			          data: {
+				      	nome: Nome,
+				      	email: Email,
+				        cpf: Cpf,
+				        senha: Senha,
+				        telefone: Telefone,
+				        cidade: Cidade,
+				        estado: Estado,
+				        logradouro: Logradouro,
+				        numero: Numero,
+				        bairro: Bairro,
+				        cep: Cep
+				      },
+				      dataType: "json",
+				      error: function(e){
+				      	console.log(e)
+				      	if(e.responseJSON.mensagem != ''){
+				      	alert(e.responseJSON.mensagem);
+				      	}
+				      },
+				      success: function(s){
+				      	alert(s.mensagem);
+				        
+				        
+				      }
+				    });
+				  }else{
+				  	alert("Caso queira editar o endereço, ele deve estar completo.");
+				  }
+			}
+
+			function Excluir() {
+				var con = confirm("Deseja realmente excluir conta?");
+				if(con){
+					  var Cpf = localStorage.getItem("user_cpf");
+					  var Senha = localStorage.getItem("user_senha");
+
+					  if (Cpf && Senha) {
+					  	$.ajax({
+					      url: "http://localhost:8082/deletarConta",
+					      method: "GET",
+					      data: {
+					        cpf: Cpf,
+					        senha: Senha
+					      },
+					      contentType: "application/json",
+					      dataType: "json",
+					      error: function(e){
+					      	if(e.responseJSON.mensagem != ''){
+					      	alert(e.responseJSON.mensagem);
+					      	}
+					      },
+					      success: function(s){
+					      	alert(s.mensagem);
+					      	location.href = "../login.html";
+					      
+					        
+					      }
+					    });
+
+					    
+					  }else{
+					    alert("Erro, faça login novamente!");
+					    location.href = "../login.html";
+					  }
+				}
+			}
+		</script>
+
+		<div id="RedefinirSenha" class="modal" tabindex="-1">
+		  <div class="modal-dialog">
+		    <div class="modal-content">
+		      <div class="modal-header bg-dark">
+		        <h5 class="modal-title">Redefinir Senha</h5>
+		        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+		      </div>
+		      <div class="modal-body">
+		        <div>
+				  <div class="mb-3">
+				    <label for="Senha" class="form-label">Senha</label>
+				    <input type="password" class="form-control" id="Senha" placeholder="Sua senha" required>
+				  </div>
+				  <div class="mb-3">
+				    <label for="Senha2" class="form-label">Confirmar Senha:</label>
+				    <input type="password" class="form-control" id="Senha2" placeholder="Sua senha" required>
+				  </div>
+				  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+				  <button type="submit" class="btn btn-warning" onclick="MudarSenha()">Redefinir</button>
+				</div>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+
+			<header class="p-3 bg-dark text-white">
+		    <div class="container">
+		      <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+		        <a href="" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+		          <i class="fa-solid fa-store"></i>
+		        </a>
+
+		       <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+		          <li><a href="index.html" class="nav-link px-2 text-white">Cartões</a></li>
+		          <li><a href="#" class="nav-link px-2 text-secondary">Editar Perfil</a></li>
+		          <li><a href="AprovarCriacao.html" class="nav-link px-2 text-white">Aprovar</a></li>
+		          <li><a href="cadastrarADM.html" class="nav-link px-2 text-white">Adicionar ADM</a></li>
+		        </ul>
+
+		        <div class="text-end">
+		          <button type="button" class="btn btn-outline-light me-2" onclick="Sair()">Sair</button>
+		        </div>
+		      </div>
+		    </div>
+		  </header>
+
+			<main>
+				<div class="container"><br><br><br>
+				<div class="formulario">
+				<div class="Form2 col-6">
+					<h1>Editar Perfil</h1>
+
+				  <div class="col-12">
+				    <label for="Nome" class="form-label">Nome</label>
+				    <input type="text" class="form-control" id="Nome" maxlength="200" placeholder="Seu nome" required>
+				  </div>
+				  <div class="col-12">
+				    <label for="Email" class="form-label">Email</label>
+				    <input type="email" class="form-control" id="Email" maxlength="200" placeholder="Seu email" required>
+				  </div>
+		
+				  <div class="col-12">
+				    <label for="telefone" class="form-label">Telefone</label>
+				    <input type="tel" class="form-control" id="telefone" placeholder="(XX) XXXXX-XXXX" onkeyup="mascara_telefone()" maxlength="15" minlength="15" required>
+				  </div>
+
+				  <div class="col-12">
+				    <label for="telefone" class="form-label">Estado</label>
+				    <select class="form-control" id="estado" required>
+				    	
+				    </select>
+				  </div>
+				  <div class="col-12">
+				    <label for="cidade" class="form-label">Cidade</label>
+				    <input type="text" class="form-control" id="cidade" maxlength="100" placeholder="Nome da sua cidade" onkeyup="mascara_telefone()" required>
+				  </div>
+				   <div class="col-12">
+				    <label for="logradouro" class="form-label">Logradouro</label>
+				    <input type="text" class="form-control" id="logradouro" maxlength="100" placeholder="Ex: Rua da palha" onkeyup="mascara_telefone()" required>
+				  </div>
+				   <div class="col-12">
+				    <label for="numero" class="form-label">Número</label>
+				    <input type="text" class="form-control" id="numero" maxlength="5" placeholder="Numero de sua redidência" required>
+				  </div>
+				  <div class="col-12">
+				    <label for="bairro" class="form-label">Bairro</label>
+				    <input type="text" class="form-control" id="bairro" maxlength="100" placeholder="Seuu bairro" max="5" required>
+				  </div>
+				  <div class="col-12">
+				    <label for="cep" class="form-label">CEP</label>
+				    <input type="text" class="form-control" id="cep" placeholder="Seu cep" minlength="8" maxlength="8" required>
+				  </div>
+
+
+				  <br>
+				  <button type="submit" class="btn btn-warning" onclick="Editar()">Editar Perfil</button>
+				  <button class="btn btn-danger" onclick="Excluir()">Excluir conta</button>
+				  <button class="btn btn-info" onclick="Redefinir()">Redefinir senha</button>
+				</div>
+				</div><br><br>
+				</div>
+			</main>
+			<div class="container">
+		  <footer class="py-3 my-4">
+		    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Casa</a></li>
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Cartões</a></li>
+		      <li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Sobre</a></li>
+		    </ul>
+		    <p class="text-center text-muted" _msthash="533715" _msttexthash="271583">© 2022 - Desenvolvido por <a href="https://github.com/lucas680" target="_blank">Lucas Pereira</a>.</p>
+		  </footer>
+		</div>
+
+			<script type="text/javascript">
+				var myModal = new bootstrap.Modal(document.getElementById('RedefinirSenha'), {
+				  keyboard: false
+				})
+
+				function Redefinir(){
+					myModal.show()
+				}
+					
+
+			</script>
+	</body>
+</html>

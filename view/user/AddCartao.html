@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Banco</title>
+		<meta name="author" content="Francisco Lucas Pereira Ribeiro">
+		<meta name="description" content="Esta é uma página web simples criada como frontEnd para o desafio darm LABS">
+		<link rel="stylesheet" type="text/css" href="../css/style.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/solid.css">
+		<link rel="stylesheet" type="text/css" href="../bootstrap-5/css/bootstrap.min.css">
+		<script src="../bootstrap-5/js/bootstrap.bundle.min.js"></script>
+		<script src="../js/mascaras.js"></script>
+		<!--=============== LOGO ===============-->
+  		<link rel="Ícone com inical B de banco, criado utilizando o favicon" href="../favicon.ico" type="image/x-icon">
+
+		<!--=============== JQUERY para conectar com API ===============-->
+    	<script src="../js/jquery-3.6.0.min.js"></script>
+	</head>
+	<body>
+
+		<script src="../js/login-in.js"></script>
+		<script type="text/javascript">
+			function Criar() {
+			  var Identificacao = document.getElementById("identificacao");
+			  Identificacao = Identificacao.options[Identificacao.selectedIndex].value;
+			  var Numero = document.getElementById("Numero").value;
+			  var Senha = document.getElementById("Senha").value;
+			  var Tipo = document.getElementById("tipo");
+			  Tipo = Tipo.options[Tipo.selectedIndex].value;
+			  var Cvc = document.getElementById("cvc").value;
+			  var Validade = document.getElementById("validade");
+			  Validade = Validade.options[Validade.selectedIndex].value;
+
+			  var Tipo2 = "";
+
+			  if(Tipo == '1'){
+			  	Tipo = "Débito";
+			  	Tipo2 = "Crédito";
+			  }else if(Tipo == '2'){
+			  	Tipo = "Débito";
+			  	Tipo2 = "Poupança";
+			  }else if(Tipo == '3'){
+			  	Tipo = "Crédito";
+			  	Tipo2 = "Poupança";
+			  }
+
+			  if (Identificacao && Numero && Senha && Tipo && Cvc && Validade) {
+			    $.ajax({
+			      url: "http://localhost:8082/criarCartao",
+			      method: "GET",
+			      data: {
+			        tipo1: Tipo,
+			        tipo2: Tipo2,
+			        identificacao: Identificacao,
+			        numero: Numero,
+			        cvc: Cvc,
+			        validade: Validade,
+			        senha: Senha,
+			        cpf: localStorage.getItem("user_cpf")
+			      },
+			      contentType: "application/json",
+			      dataType: "json",
+			      error: function(e){
+			      	if(e.responseJSON.mensagem != ''){
+			      	alert(e.responseJSON.mensagem);
+			      	}
+			      },
+			      success: function(s){
+			      	alert(s.mensagem);
+			        
+			      }
+			    });
+			  }else{
+			    alert("Preencha todos os campos!")
+			  }
+			}
+		</script>
+
+        <header class="p-3 bg-dark text-white">
+		    <div class="container">
+		      <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+		        <a href="" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+		          <i class="fa-solid fa-store"></i>
+		        </a>
+
+		        <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+		          <li><a href="index.html" class="nav-link px-2 text-white">Cartões</a></li>
+		          <li><a href="#" class="nav-link px-2 text-secondary">Adicionar cartão</a></li>
+		          <li><a href="EditarPerfil.html" class="nav-link px-2 text-white">Editar perfil</a></li>
+		        </ul>
+
+		        <div class="text-end">
+		          <button type="button" class="btn btn-outline-light me-2" onclick="Sair()">Sair</button>
+		        </div>
+		      </div>
+		    </div>
+		  </header>
+
+			<main>
+				<div class="container"><br><br><br>
+				<div class="formulario">
+				<div class="Form2 col-6">
+					<h1>Criar cartão</h1>
+
+                    <div class="col-12">
+                        <label for="identificacao" class="form-label">Identificação do cartão</label>
+                        <select class="form-control" id="identificacao" required>
+                            <option value="" selected disabled>Selecione</option>
+                            <option value="Visa">Visa</option>
+                            <option value="MasterCard">MasterCard</option>
+                            <option value="Elo">Elo</option>
+                            <option value="Hipercard">Hipercard</option>
+                            <option value="American Express">American Express</option>
+                        </select>
+                      </div>
+
+                      <div class="col-12">
+                        <label for="Numero" class="form-label">Número do cartão</label>
+                        <input type="text" class="form-control" id="Numero" placeholder="XXXX XXXX XXXX XXXX" minlength="19" maxlength="19" onkeyup="mascara_numero()" required>
+                      </div>
+				  
+
+				  <div class="col-12">
+				    <label for="tipo" class="form-label">Tipo</label>
+				    <select class="form-control" id="tipo" required>
+				    	<option value="" disabled selected>Selecione</option>
+				    	<option value="Débito">Débido</option>
+				    	<option value="Crédito">Crédito</option>
+				    	<option value="Poupança">Poupança</option>
+				    	<option value="1">Débito e Crédito</option>
+				    	<option value="2">Débido e Poupança</option>
+				    	<option value="3">Crédito e Poupança</option>
+				    </select>
+				  </div>
+
+				  <div class="col-12">
+                        <label for="cvc" class="form-label">CVC do cartão</label>
+                        <input type="text" class="form-control" id="cvc" placeholder="CVC do seu cartão" minlength="3" maxlength="3" required>
+                      </div>
+
+                       <div class="col-12">
+				    <label for="validade" class="form-label">Validade</label>
+				    <select class="form-control" id="validade" required>
+				    	<option value="" disabled selected>Selecione</option>
+				    	<option value="2">2 anos</option>
+				    	<option value="4">4 anos</option>
+				    	<option value="5">5 anos</option>
+				    	<option value="6">6 anos</option>
+				    </select>
+				  </div>
+
+                  <div class="col-12">
+				    <label for="Senha" class="form-label">Senha</label>
+				    <input type="password" class="form-control" id="Senha" maxlength="200" placeholder="Digite sua senha para propósitos de segurança" required>
+				  </div>
+
+				  
+				  <br>
+				  <button type="submit" class="btn btn-warning" onclick="Criar()">Criar</button>
+				</div>
+				</div><br><br>
+				</div>
+			</main>
+			<div class="container">
+		  <footer class="py-3 my-4">
+		    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Casa</a></li>
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Cartões</a></li>
+		      <li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Sobre</a></li>
+		    </ul>
+		    <p class="text-center text-muted" _msthash="533715" _msttexthash="271583">© 2022 - Desenvolvido por <a href="https://github.com/lucas680" target="_blank">Lucas Pereira</a>.</p>
+		  </footer>
+		</div>
+
+			<script type="text/javascript">
+				var myCarousel = document.querySelector('#myCarousel')
+				var carousel = new bootstrap.Carousel(myCarousel, {
+				  interval: 2000,
+				  wrap: true
+				})
+
+				var myModal = new bootstrap.Modal(document.getElementById('LoginModal'), {
+				  keyboard: false
+				})
+
+				function Logar(){
+					myModal.show()
+				}
+
+			</script>
+	</body>
+</html>

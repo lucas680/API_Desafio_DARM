@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Banco</title>
+		<meta name="author" content="Francisco Lucas Pereira Ribeiro">
+		<meta name="description" content="Esta é uma página web simples criada como frontEnd para o desafio darm LABS">
+		<link rel="stylesheet" type="text/css" href="../css/style.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/solid.css">
+		<link rel="stylesheet" type="text/css" href="../bootstrap-5/css/bootstrap.min.css">
+		<script src="../bootstrap-5/js/bootstrap.bundle.min.js"></script>
+		<script src="../js/mascaras.js"></script>
+
+		<!--=============== JQUERY para conectar com API ===============-->
+    	<script src="../js/jquery-3.6.0.min.js"></script>
+	</head>
+	<body>
+		<script src="../js/login-in.js" defer></script>
+		<script type="text/javascript">
+			window.onload = function(){
+				  var cpf = localStorage.getItem("user_cpf");
+				  var senha = localStorage.getItem("user_senha");
+
+				  if (cpf && senha) {
+
+				    $.ajax({
+				      url: "http://localhost:8082/visualizarCartoes",
+				      method: "GET",
+				      data: {
+				        cpf: cpf,
+				        senha: senha
+				      },
+				      contentType: "application/json",
+				      dataType: "json",
+				      error: function(e){
+				      	if(e.responseJSON.mensagem != ''){
+				      	alert(e.responseJSON.mensagem);
+				      	}
+				      },
+				      success: function(s){
+				      	console.log(s)
+				      	var Clientes = document.getElementById("Clientes");
+				      	Clientes.innerHTML = "";
+
+				      	if(s.mensagem){
+				      		document.getElementById("QuantidadeClientes").innerHTML = "<p style='min-height: 200px; margin-top: 100px'>Ainda não há cartões cadastrados pelos seus clientes.</p>";
+				      	}else{
+				      		document.getElementById("QuantidadeClientes").innerHTML = "Cartões pendentes ("+s.quantidade+"):";
+
+				      		var cliente = "<div class='col-12 cartoes2'>";
+				      		var aux = 1;
+				      		for(i=0; i<s.quantidade; i++){
+				      			if((aux%3 == 0 && aux != 0) || aux == s.quantidade){
+				      				cliente += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Status: "+s.cartoes[i].status+"</p><p> Cliente: "+s.cartoes[i].nome+"</p><p>Email: "+s.cartoes[i].email+"</p><button class='btn btn-success' onclick='Aprovar(`"+s.cartoes[i].numero+"`, `"+s.cartoes[i].status+"`)'>Aprovar</button><button class='btn btn-danger' onclick='Reprovar(`"+s.cartoes[i].numero+"`, `"+s.cartoes[i].status+"`)'>Reprovar</button></div></div></div>";
+				      				Clientes.innerHTML = Clientes.innerHTML+cliente;
+				      				cliente = "<div class='col-12 cartoes2'>"
+				      			}else{
+				      				cliente += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Status: "+s.cartoes[i].status+"</p><p> Cliente: "+s.cartoes[i].nome+"</p><p>Email: "+s.cartoes[i].email+"</p><button class='btn btn-success' onclick='Aprovar(`"+s.cartoes[i].numero+"`, `"+s.cartoes[i].status+"`)'>Aprovar</button><button class='btn btn-danger' onclick='Reprovar(`"+s.cartoes[i].numero+"`, `"+s.cartoes[i].status+"`)'>Reprovar</button></div></div>";
+				      			}
+				      			aux++;
+				      		}
+				      	}
+				        
+				      }
+				    });
+				  }else{
+				    alert("Erro! faça login novamente!");
+				    location.href = "../login.html";
+				  }
+			}
+
+			function Aprovar(Numero, Stats){
+				Cpf = localStorage.getItem("user_cpf");
+				Senha = localStorage.getItem("user_senha");
+				Status = '1';
+				Mensagem = '';
+
+				var conf = confirm("Deseja realmente aprovar? : "+Numero);
+				
+				if(conf){
+
+					URL == '';
+					if(Stats == 'Criado'){
+						URL = "http://localhost:8082/aprovarCriacao";
+					}else if(Stats == 'Cadastrado'){
+						URL = "http://localhost:8082/aprovarCadastro";
+					}
+
+					$.ajax({
+						url: URL,
+						method: "GET",
+						data: {
+							cpf: Cpf,
+							senha: Senha,
+							numero: Numero,
+							status: Status,
+							mensagem: Mensagem
+						},
+						contentType: "application/json",
+						dataType: "json",
+						error: function(e){
+							if(e.responseJSON.mensagem != ''){
+							alert(e.responseJSON.mensagem);
+							}
+						},
+						success: function(s){
+							alert(s.mensagem);
+						}
+						});
+				}
+			}
+
+			function ReprovarCartao(){
+				Numero = document.getElementById("Numero").value
+				Stats = document.getElementById("Stats").value
+				Cpf = localStorage.getItem("user_cpf");
+				Senha = localStorage.getItem("user_senha");
+				Status = '2';
+				Mensagem = document.getElementById("Mensagem").value;
+
+				var conf = confirm("Deseja realmente reprovar? : "+Numero);
+				
+				if(conf){
+
+					URL == '';
+					if(Stats == 'Criado'){
+						URL = "http://localhost:8082/aprovarCriacao";
+					}else if(Stats == 'Cadastrado'){
+						URL = "http://localhost:8082/aprovarCadastro";
+					}
+
+					$.ajax({
+						url: URL,
+						method: "GET",
+						data: {
+							cpf: Cpf,
+							senha: Senha,
+							numero: Numero,
+							status: Status,
+							mensagem: Mensagem
+						},
+						contentType: "application/json",
+						dataType: "json",
+						error: function(e){
+							if(e.responseJSON.mensagem != ''){
+							alert(e.responseJSON.mensagem);
+							}
+						},
+						success: function(s){
+							alert(s.mensagem);
+						}
+						});
+				}
+			}
+		</script>
+
+
+		<div id="Reprovar" class="modal" tabindex="-1">
+		  <div class="modal-dialog">
+		    <div class="modal-content">
+		      <div class="modal-header bg-dark">
+		        <h5 class="modal-title">Reprovar cartão</h5>
+		        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+		      </div>
+		      <div class="modal-body">
+		        <div>
+				  <div class="mb-3">
+				    <label for="Senha" class="form-label">Mensagem</label>
+
+				    <textarea class="form-control" id="Mensagem" required></textarea>
+				    <input type="text" class="Invisivel" name="Numero" id="Numero">
+				    <input type="text" class="Invisivel" name="Stats" id="Stats">
+				  </div>
+				  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+				  <button type="submit" class="btn btn-warning" onclick="ReprovarCartao()">Reprovar</button>
+				</div>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+
+			<header class="p-3 bg-dark text-white">
+		    <div class="container">
+		      <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+		        <a href="" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+		          <i class="fa-solid fa-store"></i>
+		        </a>
+
+		       <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+		          <li><a href="index.html" class="nav-link px-2 text-white">Cartões</a></li>
+		          <li><a href="EditarPerfil.html" class="nav-link px-2 text-white">Editar Perfil</a></li>
+		          <li><a href="#" class="nav-link px-2 text-secondary">Aprovar</a></li>
+		          <li><a href="cadastrarADM.html" class="nav-link px-2 text-white">Adicionar ADM</a></li>
+		        </ul>
+
+		        <div class="text-end">
+		          <button type="button" class="btn btn-outline-light me-2" onclick="Sair()">Sair</button>
+		        </div>
+		      </div>
+		    </div>
+		  </header>
+
+			<main>
+				<div class="container" id="ContainerCards">
+					<div class="cartoes">
+						<h1 id="QuantidadeClientes"></h1><br>
+
+						<div id="Clientes">
+							
+						</div>
+
+					</div>
+
+
+				</div>
+			</main>
+			<div class="container">
+		  <footer class="py-3 my-4">
+		    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Casa</a></li>
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Cartões</a></li>
+		      <li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Sobre</a></li>
+		    </ul>
+		    <p class="text-center text-muted" _msthash="533715" _msttexthash="271583">© 2022 - Desenvolvido por <a href="https://github.com/lucas680" target="_blank">Lucas Pereira</a>.</p>
+		  </footer>
+		</div>
+
+			<script type="text/javascript">
+				var myModal = new bootstrap.Modal(document.getElementById('Reprovar'), {
+				  keyboard: false
+				})
+
+				function Reprovar(Numero, Stats){
+					document.getElementById("Numero").value = Numero;
+					document.getElementById("Stats").value = Stats;
+
+					myModal.show();
+				}
+					
+
+			</script>
+	</body>
+</html>

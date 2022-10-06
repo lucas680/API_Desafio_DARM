@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Banco</title>
+		<meta name="author" content="Francisco Lucas Pereira Ribeiro">
+		<meta name="description" content="Esta é uma página web simples criada como frontEnd para o desafio darm LABS">
+		<link rel="stylesheet" type="text/css" href="../css/style.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/solid.css">
+		<link rel="stylesheet" type="text/css" href="../bootstrap-5/css/bootstrap.min.css">
+		<script src="../bootstrap-5/js/bootstrap.bundle.min.js"></script>
+		<script src="../js/mascaras.js"></script>
+
+		<!--=============== JQUERY para conectar com API ===============-->
+    	<script src="../js/jquery-3.6.0.min.js"></script>
+	</head>
+	<body>
+		<script src="../js/login-in.js" defer></script>
+		<script type="text/javascript">
+			window.onload = function(){
+				  var cpf = localStorage.getItem("user_cpf");
+				  var senha = localStorage.getItem("user_senha");
+
+				  if (cpf && senha) {
+
+				    $.ajax({
+				      url: "http://localhost:8082/visualizarCartoes",
+				      method: "GET",
+				      data: {
+				        cpf: cpf,
+				        senha: senha
+				      },
+				      contentType: "application/json",
+				      dataType: "json",
+				      error: function(e){
+				      	if(e.responseJSON.mensagem != ''){
+				      	alert(e.responseJSON.mensagem);
+				      	}
+				      },
+				      success: function(s){
+				      	if(s.mensagem != undefined){
+				      		document.getElementById("ContainerCards").innerHTML = "<br><br><br><div class='NaoTemCart'><h1>Você ainda não possui cartões</h1><button class='btn btn-warning' onclick='CriarPC()'>Criar primeiro cartão</button></div>"
+				      	}else{
+
+
+				      		document.getElementById("QuantidadeCartoes").innerHTML = "Seus cartões ("+s.quantidade+"):";
+
+				      		CartsL1 = "";
+				      		CartsL2 = "";
+
+				      		for(i=0; i<s.quantidade; i++){
+				      			if(i<3){
+
+				      				if(s.cartoes[i].status == "Criado" && s.cartoes[i].aprovacao == "Reprovado"){
+
+				      					CartsL1 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-info' onclick='Mensagem(`"+s.cartoes[i].mensagem+"`)'>Mensagem</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Criado" && s.cartoes[i].aprovacao == "Aprovado"){
+				      					CartsL1 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-warning' onclick='Cadastrar(`"+s.cartoes[i].numero+"`)'>Cadastrar</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Criado" && s.cartoes[i].aprovacao == "Pendente"){
+
+				      					CartsL1 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-warning' disabled>Cadastrar</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Cadastrado" && s.cartoes[i].aprovacao == "Reprovado"){
+
+				      					CartsL1 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-info' onclick='Mensagem(`"+s.cartoes[i].mensagem+"`)'>Mensagem</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Cadastrado" && s.cartoes[i].aprovacao == "Aprovado"){
+
+				      					CartsL1 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Cadastrado" && s.cartoes[i].aprovacao == "Pendente"){
+
+				      					CartsL1 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-info' disabled>Mensagem</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}
+
+				      			}else{
+				      				if(s.cartoes[i].status == "Criado" && s.cartoes[i].aprovacao == "Reprovado"){
+
+				      					CartsL2 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-info' onclick='Mensagem(`"+s.cartoes[i].mensagem+"`)'>Mensagem</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Criado" && s.cartoes[i].aprovacao == "Aprovado"){
+				      					CartsL2 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-warning' onclick='Cadastrar(`"+s.cartoes[i].numero+"`)'>Cadastrar</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Criado" && s.cartoes[i].aprovacao == "Pendente"){
+
+				      					CartsL2 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-warning' disabled>Cadastrar</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Cadastrado" && s.cartoes[i].aprovacao == "Reprovado"){
+
+				      					CartsL2 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-info' onclick='Mensagem(`"+s.cartoes[i].mensagem+"`)'>Mensagem</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Cadastrado" && s.cartoes[i].aprovacao == "Aprovado"){
+
+				      					CartsL2 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}else if(s.cartoes[i].status == "Cadastrado" && s.cartoes[i].aprovacao == "Pendente"){
+
+				      					CartsL2 += "<div class='col-3 card'><div class='card-header'>"+s.cartoes[i].identificacao+"</div><div class='card-body'><p>"+s.cartoes[i].numero+"/"+s.cartoes[i].cvc+"</p><p>Validade: "+s.cartoes[i].validade+"</p><p>Cartão: "+s.cartoes[i].status+"</p><p>Status: "+s.cartoes[i].aprovacao+"</p><button class='btn btn-info' disabled>Mensagem</button><button class='btn btn-danger' onclick='Excluir(`"+localStorage.getItem("user_cpf")+"`, `"+localStorage.getItem("user_senha")+"`, `"+s.cartoes[i].numero+"`)'>Excluir</button></div></div>";
+
+				      				}
+				      			}
+				      		}
+
+				      		document.getElementById("CartoesL1").innerHTML = CartsL1;
+				      		document.getElementById("CartoesL2").innerHTML = CartsL2;
+
+				      	}
+				        
+				      }
+				    });
+				  }else{
+				    alert("Erro! faça login novamente!");
+				    location.href = "../login.html";
+				  }
+			}
+
+			function Excluir(Cpf, Senha, Numero){
+				var conf = confirm("Deseja realmente deletar: "+Numero);
+				
+				if(conf){
+					$.ajax({
+						url: "http://localhost:8082/deletarCartao",
+						method: "GET",
+						data: {
+							cpf: Cpf,
+							senha: Senha,
+							numero: Numero
+						},
+						contentType: "application/json",
+						dataType: "json",
+						error: function(e){
+							if(e.responseJSON.mensagem != ''){
+							alert(e.responseJSON.mensagem);
+							}
+						},
+						success: function(s){
+							alert(s.mensagem);
+							location.href = "index.html";
+							
+						}
+						});
+				}
+			}
+
+
+			function Cadastrar(Numero){
+				var Cpf = localStorage.getItem("user_cpf");
+				var Senha = localStorage.getItem("user_senha");
+
+				var conf = confirm("Deseja realmente cadastrar?: "+Numero);
+				
+				if(conf){
+					$.ajax({
+						url: "http://localhost:8082/cadastrarCartao",
+						method: "GET",
+						data: {
+							cpf: Cpf,
+							senha: Senha,
+							numero: Numero
+						},
+						contentType: "application/json",
+						dataType: "json",
+						error: function(e){
+							if(e.responseJSON.mensagem != ''){
+							alert(e.responseJSON.mensagem);
+							}
+						},
+						success: function(s){
+							alert(s.mensagem);
+							location.href = "index.html";
+							
+						}
+						});
+				}
+			}
+
+			function Mensagem(M){
+				alert(M)
+			}
+
+			function CriarPC(){
+				location.href = "AddCartao.html";
+			}
+		</script>
+
+			<header class="p-3 bg-dark text-white">
+		    <div class="container">
+		      <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+		        <a href="" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+		          <i class="fa-solid fa-store"></i>
+		        </a>
+
+		        <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+		          <li><a href="#" class="nav-link px-2 text-secondary">Cartões</a></li>
+		          <li><a href="AddCartao.html" class="nav-link px-2 text-white">Adicionar cartão</a></li>
+		          <li><a href="EditarPerfil.html" class="nav-link px-2 text-white">Editar perfil</a></li>
+		        </ul>
+
+		        <div class="text-end">
+		          <button type="button" class="btn btn-outline-light me-2" onclick="Sair()">Sair</button>
+		        </div>
+		      </div>
+		    </div>
+		  </header>
+
+			<main>
+				<div class="container" id="ContainerCards">
+					<div class="cartoes">
+						<h1 id="QuantidadeCartoes"></h1><br>
+
+						<div class="col-12 cartoes2" id="CartoesL1">
+							
+						</div>
+
+						<div class="col-12 cartoes2" id="CartoesL2">
+							
+						</div>
+
+					</div>
+
+
+				</div>
+			</main>
+			<div class="container">
+		  <footer class="py-3 my-4">
+		    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Casa</a></li>
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Cartões</a></li>
+		      <li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Sobre</a></li>
+		    </ul>
+		    <p class="text-center text-muted" _msthash="533715" _msttexthash="271583">© 2022 - Desenvolvido por <a href="https://github.com/lucas680" target="_blank">Lucas Pereira</a>.</p>
+		  </footer>
+		</div>
+
+			<script type="text/javascript">
+				var myCarousel = document.querySelector('#myCarousel')
+				var carousel = new bootstrap.Carousel(myCarousel, {
+				  interval: 2000,
+				  wrap: true
+				})
+
+				var myModal = new bootstrap.Modal(document.getElementById('LoginModal'), {
+				  keyboard: false
+				})
+
+				function Logar(){
+					myModal.show()
+				}
+
+			</script>
+	</body>
+</html>

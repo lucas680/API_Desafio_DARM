@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Banco</title>
+		<meta name="author" content="Francisco Lucas Pereira Ribeiro">
+		<meta name="description" content="Esta é uma página web simples criada como frontEnd para o desafio darm LABS">
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+		<link rel="stylesheet" type="text/css" href="fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" type="text/css" href="fontawesome/css/solid.css">
+		<link rel="stylesheet" type="text/css" href="bootstrap-5/css/bootstrap.min.css">
+		<script src="bootstrap-5/js/bootstrap.bundle.min.js"></script>
+		<script src="js/mascaras.js"></script>
+		<!--=============== LOGO ===============-->
+  		<link rel="Ícone com inical B de banco, criado utilizando o favicon" href="favicon.ico" type="image/x-icon">
+
+		<!--=============== JQUERY para conectar com API ===============-->
+    	<script src="js/jquery-3.6.0.min.js"></script>
+	</head>
+	<body>
+
+		<script src="js/redefinir.js"></script>
+
+			<header class="p-3 bg-dark text-white">
+		    <div class="container">
+		      <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+		        <a href="" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+		          <i class="fa-solid fa-store"></i>
+		        </a>
+
+		        <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+		          <li><a href="login.html" class="nav-link px-2 text-white">Login</a></li>
+		        </ul>
+		      </div>
+		    </div>
+		  </header>
+
+			<main>
+				<div class="container"><br><br><br>
+				<div class="formulario">
+				<div class="Form2 col-6">
+					<h1>Redefinir Senha</h1>
+
+				  <div class="col-12">
+				    <label for="Nome" class="form-label">Nome</label>
+				    <input type="text" class="form-control" id="Nome" maxlength="200" placeholder="Seu nome" required>
+				  </div>
+				  <div class="col-12">
+				    <label for="Email" class="form-label">Email</label>
+				    <input type="email" class="form-control" id="Email" maxlength="200" placeholder="Seu email" required>
+				  </div>
+				  <div class="col-12">
+				    <label for="cpf" class="form-label">CPF</label>
+				    <input type="text" class="form-control" id="cpf" placeholder="XXX.XXX.XXX-XX" minlength="14" maxlength="14" onkeyup="mascara_cpf()" required>
+				  </div>
+				  <div class="col-12">
+				    <label for="Senha" class="form-label">Senha</label>
+				    <input type="password" class="form-control" id="Senha" maxlength="200" placeholder="Sua senha (mín de 8 caracteres)" required>
+				  </div>
+				  <div class="col-12">
+				    <label for="Senha2" class="form-label">Confirmar senha</label>
+				    <input type="password" class="form-control" id="Senha2" maxlength="200" placeholder="Sua senha (mín de 8 caracteres)" required>
+				  </div>
+
+
+				  <br>
+				  <button type="submit" class="btn btn-warning" onclick="Redefinir()">Redefinir</button>
+				</div>
+				</div><br><br>
+				</div>
+			</main>
+			<div class="container">
+		  <footer class="py-3 my-4">
+		    <p class="text-center text-muted" _msthash="533715" _msttexthash="271583">© 2022 - Desenvolvido por <a href="https://github.com/lucas680" target="_blank">Lucas Pereira</a>.</p>
+		  </footer>
+		</div>
+
+	</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Banco</title>
+		<meta name="author" content="Francisco Lucas Pereira Ribeiro">
+		<meta name="description" content="Esta é uma página web simples criada como frontEnd para o desafio darm LABS">
+		<link rel="stylesheet" type="text/css" href="../css/style.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" type="text/css" href="../fontawesome/css/solid.css">
+		<link rel="stylesheet" type="text/css" href="../bootstrap-5/css/bootstrap.min.css">
+		<script src="../bootstrap-5/js/bootstrap.bundle.min.js"></script>
+		<script src="../js/mascaras.js"></script>
+
+		<!--=============== JQUERY para conectar com API ===============-->
+    	<script src="../js/jquery-3.6.0.min.js"></script>
+	</head>
+	<body>
+
+		<script src="../js/login-in.js" defer></script>
+		<script type="text/javascript">
+			window.onload = function(){
+				$.ajax({
+			      url: "http://localhost:8082/estados",
+			      method: "GET",
+			      contentType: "application/json",
+			      dataType: "json",
+			      error: function(e){
+			      	if(e.responseJSON.mensagem != ''){
+			      	alert(e.responseJSON.mensagem);
+			      	}
+			      },
+			      success: function(s){
+			      	Estados = document.getElementById("estado");
+			      	opts = "<option value='' disabled selected>Selecione</option>";
+			      	for(i = 0; i<s.estados.length; i++){
+			      		opts += "<option value='"+s.estados[i].id+"'>"+s.estados[i].nome+"</option>"
+			      	}
+
+			      	Estados.innerHTML = opts;
+			        
+			      }
+			    });
+			}
+
+			function Selecionado(){
+				var ordem = document.getElementById("ordem");
+				ordem = ordem.options[ordem.selectedIndex].value;
+
+				if(ordem == 'Q'){
+					document.getElementById("Qcartoes").classList.remove('Invisivel');
+					document.getElementById("estado").classList.add("Invisivel");
+				}else if(ordem == 'E'){
+					document.getElementById("Qcartoes").classList.add('Invisivel');
+					document.getElementById("estado").classList.remove("Invisivel");
+				}else{
+					document.getElementById("Qcartoes").classList.add('Invisivel');
+					document.getElementById("estado").classList.add("Invisivel");
+				}
+			}
+
+			function Pesquisar(){
+				var ordem = document.getElementById("ordem");
+				ordem = ordem.options[ordem.selectedIndex].value;
+
+				var Qcartoes = document.getElementById("Qcartoes");
+				Qcartoes = Qcartoes.options[Qcartoes.selectedIndex].value;
+
+				var estado = document.getElementById("estado");
+				estado = estado.options[estado.selectedIndex].value;
+
+				var ordem2 = "";
+
+				if(ordem == 'Q' && Qcartoes > 0 && Qcartoes < 7){
+					ordem2 = Qcartoes;
+				}else if(ordem == 'E' && estado > 0 && estado < 28){
+					ordem2 = estado;
+				}
+
+				if(ordem == 'A' || (ordem == 'Q' && ordem2 > 0 && ordem2 < 7) || 
+					(ordem == 'E' && ordem2 > 0 && ordem2 < 28)){
+
+					$.ajax({
+				      url: "http://localhost:8082/visualizarClientes",
+				      method: "GET",
+				      data: {
+				        cpf: localStorage.getItem("user_cpf"),
+				        senha: localStorage.getItem("user_senha"),
+				        indicador: ordem,
+				        indicador2: ordem2
+				      },
+				      contentType: "application/json",
+				      dataType: "json",
+				      error: function(e){
+				      	if(e.responseJSON.mensagem != ''){
+				      	alert(e.responseJSON.mensagem);
+				      	}
+				      },
+				      success: function(s){
+				      	var Clientes = document.getElementById("Clientes");
+				      	Clientes.innerHTML = "";
+
+				      	if(s.mensagem){
+				      		document.getElementById("QuantidadeClientes").innerHTML = s.mensagem;
+				      	}else{
+				      		document.getElementById("QuantidadeClientes").innerHTML = "Seus clientes ("+s.quantidade+"):";
+
+				      		var cliente = "<div class='col-12 cartoes2'>";
+				      		var aux = 1;
+				      		for(i=0; i<s.quantidade; i++){
+				      			if((aux%4 == 0 && aux != 0) || aux == s.quantidade){
+				      				cliente += "<div class='col-2 card'><div class='card-header'>"+s.pessoas[i].nome+"</div><div class='card-body'><p>"+s.pessoas[i].cpf+"</p><p>"+s.pessoas[i].email+"</p></div></div></div>";
+				      				Clientes.innerHTML = Clientes.innerHTML+cliente;
+				      				cliente = "<div class='col-12 cartoes2'>"
+				      			}else{
+				      				cliente += "<div class='col-2 card'><div class='card-header'>"+s.pessoas[i].nome+"</div><div class='card-body'><p>"+s.pessoas[i].cpf+"</p><p>"+s.pessoas[i].email+"</p></div></div>";
+				      			}
+				      			aux++;
+				      		}
+				      	}
+				        
+				      }
+				    });
+
+				}else{
+					alert("Erro: selecione corretamente");
+				}
+			}
+
+		</script>
+
+
+			<header class="p-3 bg-dark text-white">
+		    <div class="container">
+		      <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+		        <a href="" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+		          <i class="fa-solid fa-store"></i>
+		        </a>
+
+		        <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+		          <li><a href="#" class="nav-link px-2 text-secondary">Cartões</a></li>
+		          <li><a href="EditarPerfil.html" class="nav-link px-2 text-white">Editar Perfil</a></li>
+		          <li><a href="AprovarCriacao.html" class="nav-link px-2 text-white">Aprovar</a></li>
+		          <li><a href="cadastrarADM.html" class="nav-link px-2 text-white">Adicionar ADM</a></li>
+		        </ul>
+
+		        <div class="text-end">
+		          <button type="button" class="btn btn-outline-light me-2" onclick="Sair()">Sair</button>
+		        </div>
+		      </div>
+		    </div>
+		  </header>
+
+			<main>
+				<div class="container">
+					<div class="cartoes">
+						
+						<div class="formulario2">
+						<div class="col-6">
+							<h1>Pesquisar clientes</h1>
+						  <div class="col-12">
+						    <select class="form-control" id="ordem" onchange="Selecionado()" required>
+						    	<option value="" selected disabled>Selecione a ordem</option>
+						    	<option value="A">Alfabética</option>
+						    	<option value="Q">Quantidade de cartões</option>
+						    	<option value="E">Estado</option>
+						    </select>
+						  </div><br>
+						  <div class="col-12">
+						    <select class="form-control Invisivel" id="Qcartoes" required>
+						    	<option value="" selected disabled>Selecione a quantidade</option>
+						    	<option value="1">1 Cartão</option>
+						    	<option value="2">2 Cartões</option>
+						    	<option value="3">3 Cartões</option>
+						    	<option value="4">4 Cartões</option>
+						    	<option value="5">5 Cartões</option>
+						    	<option value="6">6 Cartões</option>
+						    </select>
+						  </div><br>
+						  <div class="col-12">
+						    <select class="form-control Invisivel" id="estado" required>
+						    	
+						    </select>
+						  </div>
+						  <br>
+						  <button type="submit" class="btn btn-warning" onclick="Pesquisar()">Pesquisar</button>
+						</div>
+						</div><br><br>
+
+						<h1 id="QuantidadeClientes"></h1><br>
+
+						<div id="Clientes">
+							
+						</div>
+
+
+					</div>
+
+				</div>
+			</main>
+			<div class="container">
+		  <footer class="py-3 my-4">
+		    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Casa</a></li>
+		    	<li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Cartões</a></li>
+		      <li class="nav-item"><a href="" class="nav-link px-2 text-muted" _msthash="940173" _msttexthash="59826">Sobre</a></li>
+		    </ul>
+		    <p class="text-center text-muted" _msthash="533715" _msttexthash="271583">© 2022 - Desenvolvido por <a href="https://github.com/lucas680" target="_blank">Lucas Pereira</a>.</p>
+		  </footer>
+		</div>
+
+			<script type="text/javascript">
+				var myCarousel = document.querySelector('#myCarousel')
+				var carousel = new bootstrap.Carousel(myCarousel, {
+				  interval: 2000,
+				  wrap: true
+				})
+
+				var myModal = new bootstrap.Modal(document.getElementById('LoginModal'), {
+				  keyboard: false
+				})
+
+				function Logar(){
+					myModal.show()
+				}
+
+			</script>
+	</body>
+</html>

@@ -1,4 +1,6 @@
 const express = require('express');
+const cors = require('cors');
+
 const app = express();
 
 const multer = require('multer');
@@ -10,8 +12,16 @@ const estado = require('./models/estado');
 const telefone = require('./models/telefone');
 const cartao = require('./models/cartao');
 const endereco = require('./models/endereco');
+const { Op } = require("sequelize");
 
 app.use(express.json());
+
+app.use((req, res, next)=>{
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
+	app.use(cors());
+	next();
+})
 
 //função para validar email
 const validateEmail = (email) => {
@@ -41,6 +51,40 @@ const convertercpf = (cpf) => {
 	var Cpf = p1+'.'+p2+'.'+p3+'-'+p4;
 
 	return Cpf;
+}
+
+function validate_cpf(cpf) {
+    cpf = cpf.replace(/[^\d]+/g, '');
+    if (cpf == '') return false;
+    if (cpf.length != 11 ||
+        cpf == "00000000000" ||
+        cpf == "11111111111" ||
+        cpf == "22222222222" ||
+        cpf == "33333333333" ||
+        cpf == "44444444444" ||
+        cpf == "55555555555" ||
+        cpf == "66666666666" ||
+        cpf == "77777777777" ||
+        cpf == "88888888888" ||
+        cpf == "99999999999")
+        return false;
+    add = 0;
+    for (i = 0; i < 9; i++)
+        add += parseInt(cpf.charAt(i)) * (10 - i);
+    rev = 11 - (add % 11);
+    if (rev == 10 || rev == 11)
+        rev = 0;
+    if (rev != parseInt(cpf.charAt(9)))
+        return false;
+    add = 0;
+    for (i = 0; i < 10; i++)
+        add += parseInt(cpf.charAt(i)) * (11 - i);
+    rev = 11 - (add % 11);
+    if (rev == 10 || rev == 11)
+        rev = 0;
+    if (rev != parseInt(cpf.charAt(10)))
+        return false;
+    return true;
 }
 
 //função para validar telefone
@@ -148,7 +192,7 @@ app.get("/", async(req, res)=>{
 
 //cadastro de usuário e adm
 
-app.post("/cadastrar", async(req, res)=>{
+app.get("/cadastrar", async(req, res)=>{
 
 	var nome = req.body.nome
 	var tipo = req.body.tipo
@@ -157,12 +201,6 @@ app.post("/cadastrar", async(req, res)=>{
 	var senha = req.body.senha
 	var senha2 = req.body.senha2
 	var cpf = req.body.cpf
-
-
-	if(tipo != undefined && tipo != null && tipo != ''){
-	//tipo apenas com a primeira letra maiúscula
-	tipo = tipo[0].toUpperCase()+tipo.substr(1).toLowerCase()
-	}
 
 	var Telefone = req.body.telefone
 
@@ -173,10 +211,54 @@ app.post("/cadastrar", async(req, res)=>{
 	var bairro = req.body.bairro
 	var cep = req.body.cep
 
+	if(nome == undefined  && email == undefined && cpf == undefined){
 
-	if(nome != '' && (((tipo == 'Corrente' || tipo == 'Poupança') && status == '0') || ((tipo == undefined || tipo == null || tipo == '') && status == '1')) && (validateEmail(email) || email == '') &&
-((senha == senha2) && senha != '' && senha.length > 7) && (validatecpf(cpf) && cpf.length == 14) && validateTelefone(Telefone) && cidade != '' && (Estado > 0 && Estado < 28) && 
-logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep) && cep.length == 8){
+		nome = req.query.nome
+		tipo = req.query.tipo
+		status = req.query.status
+		email = req.query.email
+		senha = req.query.senha
+		senha2 = req.query.senha2
+		cpf = req.query.cpf
+
+		Telefone = req.query.telefone
+
+		cidade = req.query.cidade
+		Estado = req.query.estado
+		logradouro = req.query.logradouro
+		numero = req.query.numero
+		bairro = req.query.bairro
+		cep = req.query.cep
+
+	}
+
+	if(tipo != undefined && tipo != null && tipo != ''){
+	//tipo apenas com a primeira letra maiúscula
+	tipo = tipo[0].toUpperCase()+tipo.substr(1).toLowerCase()
+	}
+
+
+	if(nome != '' && bairro != '' && cidade != '' && logradouro != ''){
+
+	if((((tipo == 'Corrente' || tipo == 'Poupança') && status == '0') || 
+			((tipo == undefined || tipo == null || tipo == '') && status == '1'))){
+
+	if(validateEmail(email) || email == ''){
+
+	if(senha != '' && senha.length > 7){
+
+	if(senha == senha2){
+
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+
+	if(validateTelefone(Telefone)){
+
+	if(Estado > 0 && Estado < 28){
+
+	if(!isNaN(numero)){
+
+	if(cep.length == 8 && !isNaN(cep)){
+
 
 		senha = criptografar(senha);
 		cpf = convertercpf(cpf);
@@ -288,13 +370,92 @@ logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep) && cep.length 
 
 	});
 
+	}else{
 
+	res.status(400).json({
+		erro: true,
+		mensagem: "O CEP deve ser um número de 8 dígitos!"
+	})
+
+	}
 
 	}else{
 
 	res.status(400).json({
 		erro: true,
-		mensagem: "Por favor, envie os dados corretamente"
+		mensagem: "Número da residência inválido!"
+	})
+
+	}
+
+	}else{
+
+	res.status(400).json({
+		erro: true,
+		mensagem: "Este estado não existe em nossa base de dados!"
+	})
+
+	}
+
+	}else{
+
+	res.status(400).json({
+		erro: true,
+		mensagem: "Formato de telefone inválido!"
+	})
+
+	}
+
+	}else{
+
+	res.status(400).json({
+		erro: true,
+		mensagem: "CPF inválido!"
+	})
+
+	}
+
+	}else{
+
+	res.status(400).json({
+		erro: true,
+		mensagem: "As senhas não são iguais!"
+	})
+
+	}
+
+	}else{
+
+	res.status(400).json({
+		erro: true,
+		mensagem: "Formato de senha inválido!"
+	})
+
+	}
+
+	}else{
+
+	res.status(400).json({
+		erro: true,
+		mensagem: "O email é inválido!"
+	})
+
+	}
+
+	}else{
+
+	res.status(400).json({
+		erro: true,
+		mensagem: "Por favor, envie o tipo da conta corretamente"
+	})
+
+	}
+
+	}else{
+
+	res.status(400).json({
+		erro: true,
+		mensagem: "Preencha todos os campos!"
 	})
 
 	}
@@ -304,7 +465,7 @@ logradouro != '' && !isNaN(numero) && bairro != '' && !isNaN(cep) && cep.length 
 
 // criação de cartão novo
 
-app.post("/criarCartao", (req, res) =>{
+app.get("/criarCartao", (req, res) =>{
 	var tipo1 = req.body.tipo1
 	var tipo2 = req.body.tipo2
 	var identificacao = req.body.identificacao
@@ -314,15 +475,31 @@ app.post("/criarCartao", (req, res) =>{
 	var cpf = req.body.cpf
 	var senha = req.body.senha
 
+	if(tipo1 == undefined && identificacao == undefined && numero == undefined){
+		tipo1 = req.query.tipo1
+		tipo2 = req.query.tipo2
+		identificacao = req.query.identificacao
+		numero = req.query.numero
+		cvc = req.query.cvc
+		validade = req.query.validade
+		cpf = req.query.cpf
+		senha = req.query.senha
+	}
+
 	//tipo apenas com a primeira letra maiúscula
 	tipo1 = tipo1[0].toUpperCase()+tipo1.substr(1).toLowerCase()
 	if(tipo2 != ''){
 		tipo2 = tipo2[0].toUpperCase()+tipo2.substr(1).toLowerCase()
 	}
 
-	if(validatecpf(cpf) && cpf.length == 14 && validateNumeroCartao(numero) && validateTipo(tipo1, 1) && validateTipo(tipo2, 2) && tipo1 != tipo2 && 
-		validateIdentificacao(identificacao) && !isNaN(cvc) && cvc.length == 3 && (validade == 2 || validade == 4 ||
-			validade == 5 || validade == 6) && senha != '' && senha.length > 7){
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+	if(validateNumeroCartao(numero)){
+	if(validateTipo(tipo1, 1) && validateTipo(tipo2, 2) && tipo1 != tipo2){
+	if(validateIdentificacao(identificacao)){
+	if(!isNaN(cvc) && cvc.length == 3){
+	if(validade == 2 || validade == 4 || validade == 5 || validade == 6){
+	if(senha != '' && senha.length > 7){
+
 			senha = criptografar(senha);
 
 		// obs: O status é para somente usuários (status == 0) criarem cartões
@@ -445,7 +622,61 @@ app.post("/criarCartao", (req, res) =>{
 
 		res.status(400).json({
 		erro: true,
-		mensagem: "Por favor, envie os dados corretamente"
+		mensagem: "A senha tem no mínimo 8 caracteres!"
+		})
+
+	}
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "A validade deve ser de 2, 4, 5 ou 6 anos!"
+		})
+
+	}
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "O CVC deve ser um número de 3 caracteres."
+		})
+
+	}
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "A Identificação do cartão não é reconhecida!"
+		})
+
+	}
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Tipo do cartão inválido!"
+		})
+
+	}
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Número do cartão inválido!"
+		})
+
+	}
+
+	}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "CPF inválido!"
 		})
 
 	}
@@ -456,15 +687,32 @@ app.post("/criarCartao", (req, res) =>{
 
 // recuperar senha a partir do cpf, email e nome completo
 
-app.patch("/redefinirSenha", async(req, res) =>{
+app.get("/redefinirSenha", async(req, res) =>{
 	var nome = req.body.nome
 	var email = req.body.email
 	var cpf = req.body.cpf
 	var senha = req.body.senha
 	var senha2 = req.body.senha2
 
-	if(nome != '' && (validateEmail(email) || email == '') && validatecpf(cpf) && cpf.length == 14 &&
-	 senha != '' && senha == senha2 && senha.length > 7){
+	if(nome == undefined && email == undefined && cpf == undefined){
+		nome = req.query.nome
+		email = req.query.email
+		cpf = req.query.cpf
+		senha = req.query.senha
+		senha2 = req.query.senha2
+	}
+
+
+	if(nome != ''){
+
+	if(validateEmail(email) || email == ''){
+
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+
+	if(senha != '' && senha.length > 7){
+
+	if(senha == senha2){
+
 
 		senha = criptografar(senha)
 
@@ -510,11 +758,47 @@ app.patch("/redefinirSenha", async(req, res) =>{
 		})
 		})
 
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "As senhas não são iguais!"
+		})
+
+	}
+
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "A senha deve ter no mínimo 8 caracteres!"
+		})
+
+	}
+
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "CPF inválido!"
+		})
+
+	}
+
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Email inválido!"
+		})
+
+	}
+
 	}else{
 
 		res.status(400).json({
 		erro: true,
-		mensagem: "Por favor, envie os dados corretamente"
+		mensagem: "O campo nome não pode estar vazio!"
 		})
 
 	}
@@ -524,15 +808,27 @@ app.patch("/redefinirSenha", async(req, res) =>{
 
 // aprovar criação de cartão pelo ADM
 
-app.patch("/aprovarCriacao", (req, res)=>{
+app.get("/aprovarCriacao", (req, res)=>{
 
-	cpf = req.body.cpf
-	numero = req.body.numero
-	status = req.body.status
-	mensagem = req.body.mensagem
-	senha = req.body.senha
+	var cpf = req.body.cpf
+	var numero = req.body.numero
+	var status = req.body.status
+	var mensagem = req.body.mensagem
+	var senha = req.body.senha
 
-	if(validatecpf(cpf) && validateNumeroCartao(numero) && (status == 1 || (status == 2 && mensagem != '')) && senha != ''){
+	if(cpf == undefined && numero == undefined && senha == undefined){
+		cpf = req.query.cpf
+		numero = req.query.numero
+		status = req.query.status
+		mensagem = req.query.mensagem
+		senha = req.query.senha
+	}
+
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+	if(validateNumeroCartao(numero)){
+	if(status == 1 || (status == 2 && mensagem != '')){
+	if(senha != '' && senha.length > 7){
+
 		senha = criptografar(senha);
 
 		users.findAll({
@@ -611,11 +907,38 @@ app.patch("/aprovarCriacao", (req, res)=>{
 
 		});
 
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "A senha deve ter no mínimo 8 caracteres!"
+		});
+
+	}
+
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Status de aprovação ou mensagem incorretos!"
+		});
+
+	}
+
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Número do cartão inválido!"
+		});
+
+	}
+
 	}else{
 
 		res.status(400).json({
 		erro: true,
-		mensagem: "Por favor, envie os dados corretamente"
+		mensagem: "CPF inválido!"
 		});
 
 	}
@@ -625,13 +948,23 @@ app.patch("/aprovarCriacao", (req, res)=>{
 
 // fazer o cadastro do cartão pelo usuário
 
-app.patch("/cadastrarCartao", (req, res)=>{
+app.get("/cadastrarCartao", (req, res)=>{
 
-	cpf = req.body.cpf
-	senha = req.body.senha
-	numero = req.body.numero
+	var cpf = req.body.cpf
+	var senha = req.body.senha
+	var numero = req.body.numero
 
-	if(validatecpf(cpf) && cpf.length && senha != '' && senha.length > 7 && validateNumeroCartao(numero)){
+	if(cpf == undefined && senha == undefined && numero == undefined){
+		cpf = req.query.cpf
+		senha = req.query.senha
+		numero = req.query.numero
+	}
+
+
+	if(validatecpf(cpf) && cpf.length && validate_cpf(cpf)){
+	if(senha != '' && senha.length > 7){
+	if(validateNumeroCartao(numero)){
+
 		senha = criptografar(senha)
 
 		users.findAll({
@@ -703,11 +1036,29 @@ app.patch("/cadastrarCartao", (req, res)=>{
 
 		});
 
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Número do cartão inválido!"
+		});
+
+	}
+
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Senha inválida!"
+		});
+
+	}
+
 	}else{
 
 		res.status(400).json({
 		erro: true,
-		mensagem: "Por favor, envie os dados corretamente"
+		mensagem: "CPF inválido!"
 		});
 
 	}
@@ -717,16 +1068,28 @@ app.patch("/cadastrarCartao", (req, res)=>{
 
 // aprovar criação de cartão pelo ADM
 
-app.patch("/aprovarCadastro", (req, res)=>{
+app.get("/aprovarCadastro", (req, res)=>{
 
-	cpf = req.body.cpf
-	numero = req.body.numero
-	status = req.body.status
-	mensagem = req.body.mensagem
-	senha = req.body.senha
+	var cpf = req.body.cpf
+	var numero = req.body.numero
+	var status = req.body.status
+	var mensagem = req.body.mensagem
+	var senha = req.body.senha
 
-	if(validatecpf(cpf) && cpf.length == 14 && validateNumeroCartao(numero) && (status == 1 || (status == 2 && mensagem != '')) &&
-	 senha != '' && senha.length > 7){
+	if(cpf == undefined && senha == undefined && numero == undefined){
+		cpf = req.query.cpf
+		numero = req.query.numero
+		status = req.query.status
+		mensagem = req.query.mensagem
+		senha = req.query.senha
+	}
+
+
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+	if(senha != '' && senha.length > 7){
+	if(validateNumeroCartao(numero)){
+	if(status == 1 || (status == 2 && mensagem != '')){
+
 		senha = criptografar(senha);
 
 		users.findAll({
@@ -805,11 +1168,38 @@ app.patch("/aprovarCadastro", (req, res)=>{
 
 		});
 
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Para reprovar um cartão é necessário enviar uma mensagem."
+		});
+
+	}
+
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "Número do cartão inválido!"
+		});
+
+	}
+
+		}else{
+
+		res.status(400).json({
+		erro: true,
+		mensagem: "A senha deve ter no mínimo 8 caracteres!"
+		});
+
+	}
+
 	}else{
 
 		res.status(400).json({
 		erro: true,
-		mensagem: "Por favor, envie os dados corretamente"
+		mensagem: "CPF inválido!"
 		});
 
 	}
@@ -818,6 +1208,264 @@ app.patch("/aprovarCadastro", (req, res)=>{
 
 
 // editar perfil do usuario e ADM
+
+app.get("/editarPerfil", async(req, res) =>{
+        
+        var nome = req.body.nome
+        var email = req.body.email
+        var cpf = req.body.cpf
+        var senha = req.body.senha
+
+        var Telefone = req.body.telefone
+
+        var Estado = req.body.estado
+        var cidade = req.body.cidade
+        var logradouro = req.body.logradouro
+        var numero = req.body.numero
+        var bairro = req.body.bairro
+        var cep = req.body.cep
+        var contador = 0;
+
+        if(nome == undefined && email == undefined && cpf == undefined){
+        		nome = req.query.nome
+	        	email = req.query.email
+	        	cpf = req.query.cpf
+	        	senha = req.query.senha
+
+	        	Telefone = req.query.telefone
+
+	        	Estado = req.query.estado
+	        	cidade = req.query.cidade
+	        	logradouro = req.query.logradouro
+	        	numero = req.query.numero
+	        	bairro = req.query.bairro
+	        	cep = req.query.cep
+        }
+
+        
+
+        if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+        if(senha != '' && senha.length > 7){
+
+        	senha = criptografar(senha);
+
+        	if(nome != ''){
+
+        		await users.findAll({
+        			attributes: [
+        				'pes_cpf'
+        			],
+        			where: {
+        				pes_cpf: cpf,
+        				pes_senha: senha
+        			}
+        		}).then(async(user) => {
+        			user = Object.assign({}, user);
+        			user = Object.assign({}, user[0]);
+        			user = user.dataValues.pes_cpf
+
+        			if(user == cpf){
+
+        				await users.update({
+        					pes_nome: nome
+        				}, {
+        					where: {
+        						pes_cpf: cpf
+        					}
+        				});
+
+        			}
+
+        		}).catch(()=>{
+        			res.status(400).json({
+        				erro: true,
+        				mensagem: "Erro ao verificar usuário"
+        			})
+
+        			contador = 1;
+        		});
+
+        	}
+
+        	if(validateEmail(email)){
+
+        		await users.findAll({
+        			where: {
+        				pes_cpf: cpf,
+        				pes_senha: senha
+        			}
+        		}).then(user => {
+        			user = Object.assign({}, user);
+        			user = Object.assign({}, user[0]);
+        			user_id = user.dataValues.pes_id;
+        			user_cpf = user.dataValues.pes_cpf;
+
+        			if(user_cpf == cpf){
+
+        				users.findAll({
+        					where: {
+        						pes_email: email,
+        						pes_id: {
+        							[Op.ne]: user_id
+        						}
+        					}
+        				}).then((user)=>{
+        					user = Object.assign({}, user);
+        					user = Object.assign({}, user[0]);
+
+        					if(user.dataValues.pes_email == email){
+
+	        					res.status(400).json({
+	        						erro: true,
+	        						mensagem: "Email já cadastrado em outra conta"
+	        					})
+
+	        					contador = 1;
+
+        					}
+        				}).catch(async(err)=>{
+
+	        					await users.update({
+	        					pes_email: email
+	        				}, {
+	        					where: {
+	        						pes_cpf: cpf
+	        					}
+	        				});
+
+        				});
+
+        			}
+
+        		}).catch(()=>{
+        			res.status(400).json({
+        				erro: true,
+        				mensagem: "Erro ao verificar usuário"
+        			})
+        			contador = 1;
+        		});
+
+        	}
+
+        	if(validateTelefone(Telefone)){
+        		await users.findAll({
+        			attributes: [
+        				'pes_cpf',
+        				'pes_id'
+        			],
+        			where: {
+        				pes_cpf: cpf,
+        				pes_senha: senha
+        			}
+        		}).then(async(user) => {
+        			user = Object.assign({}, user);
+        			user = Object.assign({}, user[0]);
+        			var id = user.dataValues.pes_id
+
+        			if(user.dataValues.pes_cpf == cpf){
+
+        					var ddd = Telefone.substr(1, 2);
+						var tip = Telefone.substr(5,1);
+						var n1 = Telefone.substr(6,4);
+						var n2 = Telefone.substr(11, 4);
+
+						await telefone.update({
+							tel_ddd: ddd,
+							tel_tipo: tip,
+							tel_numero: n1+n2
+						}, {
+							where: {
+								pes_id: id
+							}
+						});
+
+        			}
+
+        		}).catch(()=>{
+        			res.status(400).json({
+        				erro: true,
+        				mensagem: "Erro ao verificar usuário"
+        			})
+
+        			contador = 1;
+        		});
+
+        		
+        	}
+
+        	if(cidade != '' && logradouro != '' && bairro != '' && !isNaN(numero) && !isNaN(cep) && cep.length == 8 &&
+        		(Estado > 0 && Estado < 28)){
+
+        		await users.findAll({
+        			attributes: [
+        				'pes_cpf',
+        				'pes_id'
+        			],
+        			where: {
+        				pes_cpf: cpf,
+        				pes_senha: senha
+        			}
+        		}).then(async(user) =>{
+
+        			user = Object.assign({}, user);
+        			user = Object.assign({}, user[0]);
+        			var id = user.dataValues.pes_id
+
+        			if(user.dataValues.pes_cpf == cpf){
+        				await endereco.update({
+							end_cidade: cidade,
+							end_logradouro: logradouro,
+							end_numero: numero,
+							end_bairro: bairro,
+							end_cep: cep,
+							est_id: Estado
+						}, {
+							where: {
+								pes_id: id
+							}
+						});
+        			}
+
+        		}).catch(()=>{
+        			res.status(400).json({
+        				erro: true,
+        				mensagem: "Erro ao verificar usuário"
+        			})
+        			contador = 1;
+
+        		});
+
+        		
+
+        	}
+
+        	if(contador == 0){
+        		res.json({
+	        		erro: false,
+	        		mensagem: "Dados editados com sucesso"
+        		})
+        	}
+        	
+
+        	}else{
+
+        	res.status(400).json({
+        		erro: true,
+        		mensagem: "A senha deve ter no mínimo 8 caracteres!"
+        	})
+        }
+
+        }else{
+
+        	res.status(400).json({
+        		erro: true,
+        		mensagem: "Envie seu CPF corretamente"
+        	})
+        }
+
+});
+
+// editar perfil do usuario e ADM com método PATCH
 
 app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
 
@@ -828,8 +1476,6 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
         	foto = file.filename
         	TipoDeFoto = file.mimetype
         }
-
-        console.log(TipoDeFoto)
         
         var nome = req.body.nome
         var email = req.body.email
@@ -846,7 +1492,9 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
         var bairro = req.body.bairro
         var cep = req.body.cep
 
-        if(validatecpf(cpf) && cpf.length == 14 && senha != '' && senha.length > 7){
+        if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+        if(senha != '' && senha.length > 7){
+
         	senha = criptografar(senha);
 
         	if(foto != null && foto != undefined && foto != '' && (TipoDeFoto == 'image/png' ||
@@ -1101,6 +1749,25 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
         		mensagem: "Dados editados com sucesso"
         	})
 
+
+        	}else{
+        	//apagar foto
+        	const caminho = './imagens/'+foto;
+        	fs.unlink(caminho, (err)=>{
+        		if(err){
+        			res.json({
+        				erro: true,
+        				mensagem: "Erro ao remover imagem"
+        			})
+        		}
+        	})
+
+        	res.status(400).json({
+        		erro: true,
+        		mensagem: "Senha inválida!"
+        	})
+        }
+
         }else{
         	//apagar foto
         	const caminho = './imagens/'+foto;
@@ -1115,11 +1782,12 @@ app.patch("/editarPerfil", upload.single("foto"), async(req, res) =>{
 
         	res.status(400).json({
         		erro: true,
-        		mensagem: "É necessário enviar o seu cpf e senha atuais"
+        		mensagem: "CPF inválido!"
         	})
         }
 
 });
+
 
 // login do usuário e adm
 
@@ -1128,7 +1796,13 @@ app.get("/login", (req, res) =>{
 	var cpf = req.body.cpf
 	var senha = req.body.senha
 
-	if(validatecpf(cpf) && cpf.length == 14 && senha != '' && senha.length > 7){
+	if(cpf == undefined && senha == undefined){
+		cpf = req.query.cpf
+		senha = req.query.senha
+	}
+
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+		if(senha != '' && senha.length > 7){
 
 		senha = criptografar(senha)
 
@@ -1146,7 +1820,8 @@ app.get("/login", (req, res) =>{
 
 		res.json({
 			erro: false,
-			mensagem: "Login efetuado com sucesso"
+			mensagem: "Login efetuado com sucesso",
+			status: user.dataValues.pes_status
 		})
 
 		}
@@ -1160,7 +1835,14 @@ app.get("/login", (req, res) =>{
 	}else{
 		res.status(400).json({
 			erro: true,
-			mensagem: "Por favor, envie os dados corretamente"
+			mensagem: "A senha deve ter no mínimo 8 caracteres!"
+		})
+	}
+
+	}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "Por favor, envie um cpf válido"
 		})
 	}
 	
@@ -1170,13 +1852,22 @@ app.get("/login", (req, res) =>{
 
 app.get("/visualizarClientes", (req, res)=>{
 
-	cpf = req.body.cpf
-	senha = req.body.senha
-	indicador = req.body.indicador
-	indicador2 = req.body.indicador2
+	var cpf = req.body.cpf
+	var senha = req.body.senha
+	var indicador = req.body.indicador
+	var indicador2 = req.body.indicador2
 
-	if(validatecpf(cpf) && cpf.length == 14 && senha != '' && senha.length > 7 && ((indicador == 'E' && indicador2 > 0 && indicador2 < 28) || 
-		(indicador == 'Q' && indicador2 >= 0 && indicador2 < 7) || indicador == 'A')){
+	if(cpf == undefined && senha == undefined && indicador == undefined){
+		cpf = req.query.cpf
+		senha = req.query.senha
+		indicador = req.query.indicador
+		indicador2 = req.query.indicador2
+	}
+
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+	if(senha != '' && senha.length > 7){
+	if((indicador == 'E' && indicador2 > 0 && indicador2 < 28) || 
+		(indicador == 'Q' && indicador2 >= 0 && indicador2 < 7) || indicador == 'A'){
 
 		senha = criptografar(senha);
 
@@ -1307,7 +1998,7 @@ app.get("/visualizarClientes", (req, res)=>{
 
 						res.json({
 						quantidade: contador,
-						pesoas: array2
+						pessoas: array2
 					});
 
 					}else{
@@ -1389,11 +2080,29 @@ app.get("/visualizarClientes", (req, res)=>{
 
 		});
 
+		}else{
+
+		res.status(400).json({
+			erro: true,
+			mensagem: "Selecione os indicadores corretamente!"
+		})
+
+	}
+
+		}else{
+
+		res.status(400).json({
+			erro: true,
+			mensagem: "A senha deve ter no mínimo 8 caracteres!"
+		})
+
+	}
+
 	}else{
 
 		res.status(400).json({
 			erro: true,
-			mensagem: "Por favor, envie os dados corretamente"
+			mensagem: "CPF inválido"
 		})
 
 	}
@@ -1403,10 +2112,17 @@ app.get("/visualizarClientes", (req, res)=>{
 
 app.get("/visualizarCartoes", async(req, res)=>{
 
-	cpf = req.body.cpf
-	senha = req.body.senha
+	var cpf = req.body.cpf
+	var senha = req.body.senha
 
-	if(validatecpf(cpf) && cpf.length == 14 && senha != "" && senha.length > 7){
+	if(cpf == undefined && senha == undefined){
+		cpf = req.query.cpf
+		senha = req.query.senha
+	}
+
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+	if(senha != "" && senha.length > 7){
+
 		senha = criptografar(senha);
 
 		await users.findAll({
@@ -1611,22 +2327,67 @@ app.get("/visualizarCartoes", async(req, res)=>{
 			})
 		})
 
+		}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "A senha deve ter no mínimo 8 caracteres!"
+		})
+	}
+
 
 	}else{
 		res.status(400).json({
 			erro: true,
-			mensagem: "Por favor, envie os dados corretamente"
+			mensagem: "CPF inválido"
 		})
 	}
 
 
 });
 
-app.delete("/deletarConta", (req, res) =>{
-	cpf = req.body.cpf
-	senha = req.body.senha
+//lista dos estados
+app.get("/estados", (req, res)=>{
+	estado.findAll().then(est =>{
+		est = Object.assign({}, est);
+		quantidade = Object.keys(est).length;
+		array = [];
+		obj = {}
 
-	if(validatecpf(cpf) && cpf.length == 14 && senha != '' && senha.length > 7){
+		for(i = 0; i < quantidade; i++){
+			Estado = Object.assign({}, est[i]);
+			obj = {
+				id: Estado.dataValues.est_id,
+				nome: Estado.dataValues.est_nome
+			}
+			array[i] = obj;
+		}
+
+		res.json({
+			erro: false,
+			estados: array
+		})
+
+	}).catch(()=>{
+		res.status(400).json({
+			erro: true,
+			mensagem: "Erro ao buscar estados"
+		});
+	});
+});
+
+app.get("/deletarConta", (req, res) =>{
+	
+	var cpf = req.body.cpf
+	var senha = req.body.senha
+
+	if(cpf == undefined && senha == undefined){
+		cpf = req.query.cpf
+		senha = req.query.senha
+	}
+
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+		if(senha != '' && senha.length > 7){
+
 		senha = criptografar(senha);
 
 		users.findAll({
@@ -1703,23 +2464,119 @@ app.delete("/deletarConta", (req, res) =>{
 			})
 		})
 
+		}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "A senha deve ter no mínimo 8 caracteres!"
+		})
+	}
+
 
 	}else{
 		res.status(400).json({
 			erro: true,
-			mensagem: "Por favor, envie os dados corretamente"
+			mensagem: "CPF inválido!"
 		})
 	}
 });
 
+app.get("/pegarDados", (req, res)=>{
+	var cpf = req.body.cpf
 
-app.delete("/deletarCartao", async(req, res) => {
+	if(cpf == undefined){
+		cpf = req.query.cpf
+	}
 
-	cpf = req.body.cpf
-	senha = req.body.senha
-	numero = req.body.numero
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+		users.findAll({
+			where: {
+				pes_cpf: cpf
+			}
+		}).then(user=>{
+			user = Object.assign({}, user);
+			user = Object.assign({}, user[0]);
 
-	if(validatecpf(cpf) && cpf.length == 14 && validateNumeroCartao(numero) && senha != '' && senha.length > 7){
+			if(user.dataValues.pes_cpf == cpf){
+
+
+				endereco.findAll({
+					where: {
+						pes_id: user.dataValues.pes_id
+					}
+				}).then(end=>{
+					end = Object.assign({}, end);
+					end = Object.assign({}, end[0]);
+
+					if(end.dataValues.pes_id == user.dataValues.pes_id){
+						telefone.findAll({
+							where: {
+								pes_id: user.dataValues.pes_id
+							}
+						}).then(tel =>{
+							tel = Object.assign({}, tel);
+							tel = Object.assign({}, tel[0]);
+
+							if(tel.dataValues.pes_id == user.dataValues.pes_id){
+								res.json({
+									nome: user.dataValues.pes_nome,
+									email: user.dataValues.pes_email,
+									foto: user.dataValues.pes_foto,
+									Tddd: tel.dataValues.tel_ddd,
+									Ttipo: tel.dataValues.tel_tipo,
+									Tnumero: tel.dataValues.tel_numero,
+									cidade: end.dataValues.end_cidade,
+									logradouro: end.dataValues.end_logradouro,
+									numero: end.dataValues.end_numero,
+									bairro: end.dataValues.end_bairro,
+									cep: end.dataValues.end_cep
+								});
+							}
+						}).catch(err=>{
+							res.status(400).json({
+								erro: true,
+								mensagem: "Erro ao pesquisar telefone"
+							})
+						})
+					}
+
+				}).catch(err=>{
+					res.status(400).json({
+						erro: true,
+						mensagem: "Erro ao pesquisar endereço"
+					})
+				})
+
+			}
+		}).catch(err =>{
+			res.status(400).json({
+				erro: true,
+				mensagem: "Erro ao pesquisar usuário"
+			})
+		})
+	}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "Envie o CPF corretamente!"
+		})
+	}
+});
+
+app.get("/deletarCartao", async(req, res) => {
+
+	var cpf = req.body.cpf
+	var senha = req.body.senha
+	var numero = req.body.numero
+
+	if(cpf == undefined && senha == undefined && numero == undefined){
+		cpf = req.query.cpf
+		senha = req.query.senha
+		numero = req.query.numero
+	}
+
+	if(validatecpf(cpf) && cpf.length == 14 && validate_cpf(cpf)){
+	if(validateNumeroCartao(numero)){
+	if(senha != '' && senha.length > 7){
+
 		senha = criptografar(senha);
 
 
@@ -1784,7 +2641,21 @@ app.delete("/deletarCartao", async(req, res) => {
 	}else{
 		res.status(400).json({
 			erro: true,
-			mensagem: "Por favor, envie os dados corretamente"
+			mensagem: "Senha inválida! Deve ter no mínimo 8 caracteres."
+		})
+	}
+
+	}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "Número do cartão inválido"
+		})
+	}
+
+	}else{
+		res.status(400).json({
+			erro: true,
+			mensagem: "CPF inválido"
 		})
 	}
 
